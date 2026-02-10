@@ -2,8 +2,7 @@ import { tool } from "ai";
 import dayjs from "dayjs";
 import { z } from "zod";
 import { getCachedWebsite } from "../../lib/website-utils";
-import type { AppContext } from "../config/context";
-import { callRPCProcedure, createToolLogger } from "./utils";
+import { callRPCProcedure, createToolLogger, getAppContext } from "./utils";
 
 const logger = createToolLogger("Links Tools");
 
@@ -51,14 +50,15 @@ function formatLinkForDisplay(link: LinkData, baseUrl?: string): string {
   ${expiresInfo}${link.clickCount !== undefined ? ` | Clicks: ${link.clickCount}` : ""}`;
 }
 
-export function createLinksTools(context: AppContext) {
+export function createLinksTools() {
 	const listLinksTool = tool({
 		description:
 			"List all short links for the current website's organization. Returns links with their slugs, target URLs, and metadata.",
 		inputSchema: z.object({
 			websiteId: z.string().describe("The website ID to get links for"),
 		}),
-		execute: async ({ websiteId }) => {
+		execute: async ({ websiteId }, options) => {
+			const context = getAppContext(options);
 			try {
 				const organizationId = await getOrganizationIdFromWebsite(websiteId);
 
@@ -104,7 +104,8 @@ export function createLinksTools(context: AppContext) {
 			id: z.string().describe("The link ID"),
 			websiteId: z.string().describe("The website ID"),
 		}),
-		execute: async ({ id, websiteId }) => {
+		execute: async ({ id, websiteId }, options) => {
+			const context = getAppContext(options);
 			try {
 				const organizationId = await getOrganizationIdFromWebsite(websiteId);
 
@@ -189,18 +190,22 @@ ${link.ogDescription ? `- OG Description: ${link.ogDescription}` : ""}`,
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms. When false, returns a preview and asks for confirmation."
 				),
 		}),
-		execute: async ({
-			websiteId,
-			name,
-			targetUrl,
-			slug,
-			expiresAt,
-			expiredRedirectUrl,
-			ogTitle,
-			ogDescription,
-			ogImageUrl,
-			confirmed,
-		}) => {
+		execute: async (
+			{
+				websiteId,
+				name,
+				targetUrl,
+				slug,
+				expiresAt,
+				expiredRedirectUrl,
+				ogTitle,
+				ogDescription,
+				ogImageUrl,
+				confirmed,
+			},
+			options
+		) => {
+			const context = getAppContext(options);
 			try {
 				// If not confirmed, return preview and ask for confirmation
 				if (!confirmed) {
@@ -309,7 +314,8 @@ ${link.ogDescription ? `- OG Description: ${link.ogDescription}` : ""}`,
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms."
 				),
 		}),
-		execute: async ({ id, websiteId, confirmed, ...updates }) => {
+		execute: async ({ id, websiteId, confirmed, ...updates }, options) => {
+			const context = getAppContext(options);
 			try {
 				// First, get the current link
 				const organizationId = await getOrganizationIdFromWebsite(websiteId);
@@ -400,7 +406,8 @@ ${link.ogDescription ? `- OG Description: ${link.ogDescription}` : ""}`,
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms deletion."
 				),
 		}),
-		execute: async ({ id, websiteId, confirmed }) => {
+		execute: async ({ id, websiteId, confirmed }, options) => {
+			const context = getAppContext(options);
 			try {
 				const organizationId = await getOrganizationIdFromWebsite(websiteId);
 
@@ -453,7 +460,8 @@ ${link.ogDescription ? `- OG Description: ${link.ogDescription}` : ""}`,
 				.min(1)
 				.describe("Search query (matches name, slug, or target URL)"),
 		}),
-		execute: async ({ websiteId, query }) => {
+		execute: async ({ websiteId, query }, options) => {
+			const context = getAppContext(options);
 			try {
 				const organizationId = await getOrganizationIdFromWebsite(websiteId);
 

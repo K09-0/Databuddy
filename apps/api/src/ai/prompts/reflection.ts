@@ -13,7 +13,8 @@ const REFLECTION_RULES = `<reflection-rules>
 2. Tool returns data → Present results with JSON components or tables
 
 **After receiving data:**
-- Use JSON components (charts, links-list) or markdown tables
+- Show raw data first, exactly as returned—never rename or transform labels or values
+- Use JSON components (charts, links-list) or markdown tables with verbatim tool results
 - Don't repeat data shown in components
 - Brief follow-up question is OK
 
@@ -56,6 +57,7 @@ ${formatContextForLLM(ctx)}
 
 <important-notes>
 - Call tools immediately - no preamble or explanation
+- Present tool data verbatim in tables and charts - no cosmetic rewrites, then add analysis
 - Simple questions need simple answers - don't over-orchestrate
 - Use JSON components (charts, links-list) OR markdown - never both for the same data
 - Don't repeat data that's already shown in a component

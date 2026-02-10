@@ -72,6 +72,34 @@ type QueryBuilderInput = z.infer<typeof QueryBuilderInputSchema>;
 export const executeQueryBuilderTool = tool({
 	description: `Executes a pre-built analytics query using the query builder system. Available query types: ${Object.keys(QueryBuilders).join(", ")}. This is the preferred method for common analytics queries as it provides type safety and automatic optimization. Use execute_sql_query only when you need custom SQL that isn't covered by these builders.`,
 	inputSchema: QueryBuilderInputSchema,
+	inputExamples: [
+		{
+			input: {
+				websiteId: "ws_example",
+				type: "top_pages",
+				from: "2024-01-01",
+				to: "2024-01-31",
+			},
+		},
+		{
+			input: {
+				websiteId: "ws_example",
+				type: "summary_metrics",
+				from: "2024-01-01",
+				to: "2024-01-31",
+				timeUnit: "day",
+			},
+		},
+		{
+			input: {
+				websiteId: "ws_example",
+				type: "session_metrics",
+				from: "2024-01-01",
+				to: "2024-01-31",
+			},
+		},
+	],
+	strict: true,
 	execute: async (
 		input: QueryBuilderInput
 	): Promise<{

@@ -1,8 +1,7 @@
 import { tool } from "ai";
 import dayjs from "dayjs";
 import { z } from "zod";
-import type { AppContext } from "../config/context";
-import { callRPCProcedure, createToolLogger } from "./utils";
+import { callRPCProcedure, createToolLogger, getAppContext } from "./utils";
 
 const logger = createToolLogger("Annotations Tools");
 
@@ -47,7 +46,7 @@ const chartContextSchema = z.object({
 	tabId: z.string().optional().describe("Optional tab ID for the chart"),
 });
 
-export function createAnnotationTools(context: AppContext) {
+export function createAnnotationTools() {
 	const listAnnotationsTool = tool({
 		description:
 			"List all annotations for a website and chart context. Returns annotations with their metadata, text, tags, and timing information.",
@@ -60,7 +59,8 @@ export function createAnnotationTools(context: AppContext) {
 				"The chart context including date range, filters, and metrics"
 			),
 		}),
-		execute: async ({ websiteId, chartType, chartContext }) => {
+		execute: async ({ websiteId, chartType, chartContext }, options) => {
+			const context = getAppContext(options);
 			try {
 				const result = await callRPCProcedure(
 					"annotations",
@@ -91,7 +91,8 @@ export function createAnnotationTools(context: AppContext) {
 		inputSchema: z.object({
 			id: z.string().describe("The annotation ID"),
 		}),
-		execute: async ({ id }) => {
+		execute: async ({ id }, options) => {
+			const context = getAppContext(options);
 			try {
 				return await callRPCProcedure(
 					"annotations",
@@ -166,20 +167,24 @@ export function createAnnotationTools(context: AppContext) {
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms. When false, returns a preview and asks for confirmation."
 				),
 		}),
-		execute: async ({
-			websiteId,
-			chartType,
-			chartContext,
-			annotationType,
-			xValue,
-			xEndValue,
-			yValue,
-			text,
-			tags,
-			color,
-			isPublic,
-			confirmed,
-		}) => {
+		execute: async (
+			{
+				websiteId,
+				chartType,
+				chartContext,
+				annotationType,
+				xValue,
+				xEndValue,
+				yValue,
+				text,
+				tags,
+				color,
+				isPublic,
+				confirmed,
+			},
+			options
+		) => {
+			const context = getAppContext(options);
 			try {
 				// Validate date format
 				if (!dayjs(xValue).isValid()) {
@@ -291,7 +296,8 @@ export function createAnnotationTools(context: AppContext) {
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms. When false, returns a preview and asks for confirmation."
 				),
 		}),
-		execute: async ({ id, text, tags, color, isPublic, confirmed }) => {
+		execute: async ({ id, text, tags, color, isPublic, confirmed }, options) => {
+			const context = getAppContext(options);
 			try {
 				if (!confirmed) {
 					const currentAnnotation = (await callRPCProcedure(
@@ -413,7 +419,8 @@ export function createAnnotationTools(context: AppContext) {
 					"CRITICAL: Must be false initially. Only set to true after user explicitly confirms. When false, returns a preview and asks for confirmation."
 				),
 		}),
-		execute: async ({ id, confirmed }) => {
+		execute: async ({ id, confirmed }, options) => {
+			const context = getAppContext(options);
 			try {
 				if (!confirmed) {
 					const annotation = (await callRPCProcedure(

@@ -65,10 +65,7 @@ export const ChainOfThought = memo(
 
 		return (
 			<ChainOfThoughtContext.Provider value={chainOfThoughtContext}>
-				<div
-					className={cn("not-prose max-w-prose space-y-4", className)}
-					{...props}
-				>
+				<div className={cn("not-prose max-w-prose space-y-1", className)} {...props}>
 					{children}
 				</div>
 			</ChainOfThoughtContext.Provider>
@@ -88,16 +85,18 @@ export const ChainOfThoughtHeader = memo(
 			<Collapsible onOpenChange={setIsOpen} open={isOpen}>
 				<CollapsibleTrigger
 					className={cn(
-						"inline-flex items-center gap-1.5 rounded border bg-muted/50 px-2 py-1 text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground",
+						"flex w-full items-center justify-between gap-2 py-1 text-left text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 						className
 					)}
 					{...props}
 				>
-					<GearIcon className="size-3.5" weight="duotone" />
-					<span>{children ?? "Processing"}</span>
+					<span className="flex items-center gap-2">
+						<GearIcon className="size-3.5 shrink-0 opacity-70" weight="duotone" />
+						<span>{children ?? "Processing"}</span>
+					</span>
 					<CaretDownIcon
 						className={cn(
-							"size-3 transition-transform",
+							"size-3.5 shrink-0 opacity-60 transition-transform",
 							isOpen ? "rotate-180" : "rotate-0"
 						)}
 						weight="fill"
@@ -127,7 +126,7 @@ export const ChainOfThoughtStep = memo(
 		return (
 			<div
 				className={cn(
-					"flex items-start gap-2 text-xs",
+					"flex items-start gap-2.5 py-1.5 text-sm",
 					"fade-in-0 slide-in-from-top-1 animate-in",
 					className
 				)}
@@ -144,13 +143,13 @@ export const ChainOfThoughtStep = memo(
 						weight="bold"
 					/>
 				)}
-				<div className="min-w-0 flex-1">
-					<span className="text-foreground/70">{label}</span>
+				<div className="min-w-0 flex-1 space-y-0.5">
+					<span className="text-foreground">{label}</span>
 					{description && (
-						<p className="mt-0.5 text-muted-foreground">{description}</p>
+						<p className="text-muted-foreground text-xs">{description}</p>
 					)}
 					{children && (
-						<div className="mt-1 text-muted-foreground">{children}</div>
+						<div className="pt-0.5 text-muted-foreground text-xs">{children}</div>
 					)}
 				</div>
 			</div>
@@ -192,13 +191,13 @@ export const ChainOfThoughtContent = memo(
 			<Collapsible open={isOpen}>
 				<CollapsibleContent
 					className={cn(
-						"mt-2 space-y-1.5 rounded border bg-muted/50 p-2.5",
-						"data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+						"data-[state=closed]:hidden",
+						"data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 outline-none data-[state=open]:animate-in",
 						className
 					)}
 					{...props}
 				>
-					{children}
+					<div className="space-y-0.5 pl-5">{children}</div>
 				</CollapsibleContent>
 			</Collapsible>
 		);

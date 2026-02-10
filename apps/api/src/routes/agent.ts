@@ -80,6 +80,7 @@ function createToolLoopAgent(config: AgentConfig): InstanceType<typeof ToolLoopA
 		tools: config.tools,
 		stopWhen: config.stopWhen,
 		temperature: config.temperature,
+		experimental_context: config.experimental_context,
 	});
 }
 
@@ -163,6 +164,7 @@ export const agent = new Elysia({ prefix: "/v1/agent" })
 						websiteId: body.websiteId,
 						websiteDomain: domain,
 						timezone,
+						chatId,
 						requestHeaders: request.headers,
 					});
 

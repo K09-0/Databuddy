@@ -5,6 +5,7 @@ export interface AgentContext {
 	websiteId: string;
 	websiteDomain: string;
 	timezone: string;
+	chatId: string;
 	requestHeaders?: Headers;
 }
 
@@ -20,4 +21,5 @@ export interface AgentConfig {
 	tools: ToolSet;
 	stopWhen: StopCondition<ToolSet>;
 	temperature: number;
+	experimental_context?: unknown;
 }

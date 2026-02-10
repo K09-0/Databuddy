@@ -15,6 +15,16 @@ import {
 export const executeSqlQueryTool = tool({
 	description:
 		"Executes a validated, read-only ClickHouse SQL query against analytics data. Only SELECT and WITH statements are allowed for security. IMPORTANT: Use parameterized queries with {paramName:Type} syntax (e.g., {limit:UInt32}). The websiteId is automatically included as a parameter. Never use string interpolation or concatenation.",
+	inputExamples: [
+		{
+			input: {
+				websiteId: "ws_example",
+				sql: "SELECT path, COUNT(*) as views FROM analytics.events WHERE client_id = {websiteId:String} AND event_name = 'screen_view' AND time >= today() - 7 GROUP BY path LIMIT {limit:UInt32}",
+				params: { limit: 10 },
+			},
+		},
+	],
+	strict: true,
 	inputSchema: z.object({
 		websiteId: z
 			.string()

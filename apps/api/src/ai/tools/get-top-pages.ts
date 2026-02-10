@@ -15,6 +15,7 @@ interface TopPageResult extends Record<string, unknown> {
 export const getTopPagesTool = tool({
 	description:
 		"Get the top pages by page views for a website. Returns the most visited pages with their view counts.",
+	strict: true,
 	inputSchema: z.object({
 		websiteId: z.string().describe("The website ID to query"),
 		limit: z

@@ -11,25 +11,15 @@ import { createGoalTools } from "../tools/goals";
 import { createLinksTools } from "../tools/links";
 import type { AgentConfig, AgentContext } from "./types";
 
-function createTools(context: AgentContext) {
-	const appContext: AppContext = {
-		userId: context.userId,
-		websiteId: context.websiteId,
-		websiteDomain: context.websiteDomain,
-		timezone: context.timezone,
-		currentDateTime: new Date().toISOString(),
-		chatId: crypto.randomUUID(),
-		requestHeaders: context.requestHeaders,
-	};
-
+function createTools() {
 	return {
 		get_top_pages: getTopPagesTool,
 		execute_query_builder: executeQueryBuilderTool,
 		execute_sql_query: executeSqlQueryTool,
-		...createFunnelTools(appContext),
-		...createGoalTools(appContext),
-		...createAnnotationTools(appContext),
-		...createLinksTools(appContext),
+		...createFunnelTools(),
+		...createGoalTools(),
+		...createAnnotationTools(),
+		...createLinksTools(),
 	};
 }
 
@@ -46,14 +36,16 @@ export function createConfig(context: AgentContext): AgentConfig {
 		websiteDomain: context.websiteDomain,
 		timezone: context.timezone,
 		currentDateTime: new Date().toISOString(),
-		chatId: crypto.randomUUID(),
+		chatId: context.chatId,
+		requestHeaders: context.requestHeaders,
 	};
 
 	return {
 		model: models.triage as LanguageModel,
 		system: buildAnalyticsInstructions(appContext),
-		tools: createTools(context),
+		tools: createTools(),
 		stopWhen: stepCountIs(5),
 		temperature: 0.1,
+		experimental_context: appContext,
 	};
 }

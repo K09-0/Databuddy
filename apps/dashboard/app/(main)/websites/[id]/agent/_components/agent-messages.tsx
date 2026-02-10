@@ -1,5 +1,6 @@
 "use client";
 
+import { BrainIcon } from "@phosphor-icons/react";
 import type { UIMessage } from "ai";
 import { useRef } from "react";
 import { AIComponent } from "@/components/ai-elements/ai-component";
@@ -19,6 +20,7 @@ import {
 	ReasoningContent,
 	ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useChat } from "@/contexts/chat-context";
 import { parseContentSegments } from "@/lib/ai-components";
 import { formatToolLabel, formatToolOutput } from "@/lib/tool-display";
@@ -132,11 +134,20 @@ function renderMessagePart(
 
 	// Handle grouped tool calls
 	if (Array.isArray(part)) {
+		const toolNames = part.map((p) =>
+			formatToolLabel(
+				getToolName(p as ToolMessagePart),
+				(p as ToolMessagePart).input ?? {}
+			)
+		);
+		const headerText =
+			part.length === 1
+				? toolNames[0]
+				: `${part.length} tools: ${toolNames.slice(0, 2).join(", ")}${toolNames.length > 2 ? "…" : ""}`;
+
 		return (
 			<ChainOfThought className="my-3" defaultOpen key={key}>
-				<ChainOfThoughtHeader>
-					{part.length} {part.length === 1 ? "action" : "actions"}
-				</ChainOfThoughtHeader>
+				<ChainOfThoughtHeader>{headerText}</ChainOfThoughtHeader>
 				<ChainOfThoughtContent>
 					{part.map((toolPart, idx) => {
 						const toolName = getToolName(toolPart as ToolMessagePart);
@@ -209,7 +220,9 @@ function renderMessagePart(
 		const toolInput = (part as ToolMessagePart).input ?? {};
 		return (
 			<ChainOfThought className="my-3" defaultOpen key={key}>
-				<ChainOfThoughtHeader>1 action</ChainOfThoughtHeader>
+				<ChainOfThoughtHeader>
+					{formatToolLabel(toolName, toolInput)}
+				</ChainOfThoughtHeader>
 				<ChainOfThoughtContent>
 					<ChainOfThoughtStep
 						label={formatToolLabel(toolName, toolInput)}
@@ -268,7 +281,7 @@ export function AgentMessages() {
 				);
 			})}
 
-			{isStreaming ? (
+			{isStreaming && !chatStatus.hasTextContent ? (
 				<StreamingIndicator
 					statusText={chatStatus.displayMessage ?? undefined}
 				/>
@@ -293,21 +306,21 @@ function ErrorMessage() {
 function StreamingIndicator({ statusText }: { statusText?: string }) {
 	return (
 		<div
-			className="fade-in group w-full animate-in duration-300"
+			className="fade-in flex w-full animate-in items-center gap-2 duration-200"
 			data-role="assistant"
 		>
-			<div className="flex w-full items-center justify-start gap-2">
-				<div className="flex w-full flex-col gap-2">
-					<div className="flex items-center gap-1 text-muted-foreground text-sm">
-						<span className="animate-pulse">{statusText || "Thinking"}</span>
-						<span className="inline-flex">
-							<span className="animate-bounce [animation-delay:0ms]">.</span>
-							<span className="animate-bounce [animation-delay:150ms]">.</span>
-							<span className="animate-bounce [animation-delay:300ms]">.</span>
-						</span>
-					</div>
-				</div>
-			</div>
+			<BrainIcon
+				className="size-4 shrink-0 text-muted-foreground"
+				weight="duotone"
+			/>
+			<Shimmer
+				as="span"
+				className="text-sm"
+				duration={1}
+				spread={4}
+			>
+				{statusText || "Thinking"}
+			</Shimmer>
 		</div>
 	);
 }

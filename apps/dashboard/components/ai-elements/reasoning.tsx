@@ -99,7 +99,7 @@ export const Reasoning = memo(
 				value={{ isStreaming, isOpen, setIsOpen, duration }}
 			>
 				<Collapsible
-					className={cn("not-prose mb-4", className)}
+					className={cn("not-prose mb-4 space-y-1", className)}
 					onOpenChange={handleOpenChange}
 					open={isOpen}
 					{...props}
@@ -139,18 +139,23 @@ export const ReasoningTrigger = memo(
 		return (
 			<CollapsibleTrigger
 				className={cn(
-					"inline-flex items-center gap-1.5 rounded border bg-muted/50 px-2 py-1 text-muted-foreground text-xs transition-colors hover:bg-muted hover:text-foreground",
+					"flex w-full items-center justify-between gap-2 py-1 text-left text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 					className
 				)}
 				{...props}
 			>
 				{children ?? (
 					<>
-						<BrainIcon className="size-3.5" weight="duotone" />
-						{getThinkingMessage(isStreaming, duration)}
+						<span className="flex items-center gap-2">
+							<BrainIcon
+								className="size-3.5 shrink-0 opacity-70"
+								weight="duotone"
+							/>
+							<span>{getThinkingMessage(isStreaming, duration)}</span>
+						</span>
 						<CaretDownIcon
 							className={cn(
-								"size-3 transition-transform",
+								"size-3.5 shrink-0 opacity-60 transition-transform",
 								isOpen ? "rotate-180" : "rotate-0"
 							)}
 							weight="fill"
@@ -172,13 +177,15 @@ export const ReasoningContent = memo(
 	({ className, children, ...props }: ReasoningContentProps) => (
 		<CollapsibleContent
 			className={cn(
-				"mt-2 rounded border bg-muted/50 p-2.5 text-xs",
-				"data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-foreground/70 outline-none data-[state=closed]:animate-out data-[state=open]:animate-in",
+				"data-[state=closed]:hidden",
+				"data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 text-foreground/80 outline-none data-[state=open]:animate-in",
 				className
 			)}
 			{...props}
 		>
-			<Streamdown {...props}>{children}</Streamdown>
+			<div className="py-1.5 pl-5 text-xs">
+				<Streamdown {...props}>{children}</Streamdown>
+			</div>
 		</CollapsibleContent>
 	)
 );

@@ -16,6 +16,8 @@ const ANALYTICS_RULES = `<agent-specific-rules>
 - If you don't have tool results, you MUST call the tool first - never guess or estimate
 
 **Data Analysis:**
+- Always present raw data first, exactly as returned from tools—never rename, shorten, or transform labels or values
+- After showing the raw data, provide analysis, insights, and recommendations
 - Lead with key metrics and insights
 - Always include time context (e.g., "in the last 7 days", "yesterday vs last week")
 - Compare periods by default: show trends (↑↓), week-over-week, month-over-month
@@ -69,6 +71,7 @@ const ANALYTICS_RULES = `<agent-specific-rules>
 - Consider business context: tailor insights to the website's primary goal
 
 **Formatting:**
+- Use tool results verbatim in tables and charts—no cosmetic rewrites
 - Format large numbers with commas for readability
 - Tables must be compact: ≤5 columns, short headers, include units (%, ms, s), no empty columns
 - When ambiguous, ask clarifying questions: "Did you mean last week (Mon-Sun) or last 7 days?"
