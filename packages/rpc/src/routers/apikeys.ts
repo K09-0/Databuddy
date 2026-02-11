@@ -35,6 +35,64 @@ const rateLimitSchema = z.object({
 	window: z.number().int().positive().nullable().optional(),
 });
 
+const apiKeyOutputSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	prefix: z.string(),
+	start: z.string(),
+	type: z.enum(["user", "sdk", "automation"]),
+	enabled: z.boolean(),
+	scopes: z.array(z.string()),
+	tags: z.array(z.string()),
+	expiresAt: z.string().nullable(),
+	revokedAt: z.date().nullable(),
+	lastUsedAt: z.string().nullable(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+});
+
+const apiKeyFullOutputSchema = apiKeyOutputSchema.extend({
+	description: z.string().nullable().optional(),
+	resources: z.record(z.string(), z.array(z.string())).optional(),
+	rateLimit: z
+		.object({
+			enabled: z.boolean(),
+			max: z.number().int().positive().nullable(),
+			window: z.number().int().positive().nullable(),
+		})
+		.optional(),
+});
+
+const apiKeyCreateOutputSchema = z.object({
+	id: z.string(),
+	secret: z.string(),
+	prefix: z.string(),
+	start: z.string(),
+});
+
+const successOutputSchema = z.object({ success: z.literal(true) });
+
+const verifyValidOutputSchema = z.object({
+	valid: z.literal(true),
+	keyId: z.string(),
+	ownerId: z.string().nullable(),
+	scopes: z.array(z.string()),
+});
+
+const verifyErrorOutputSchema = z.object({
+	valid: z.literal(false),
+	error: z.string(),
+	errorCode: z.string(),
+	scopes: z.array(z.string()).optional(),
+	matched: z.array(z.string()).optional(),
+	missing: z.array(z.string()).optional(),
+});
+
+const verifyOutputSchema = z.discriminatedUnion("valid", [
+	verifyValidOutputSchema,
+	verifyErrorOutputSchema,
+]);
+
 const getMeta = (key: ApiKey): Metadata => (key.metadata as Metadata) ?? {};
 
 async function verifyOrganizationAccess(
@@ -120,6 +178,7 @@ export const apikeysRouter = {
 				"Returns API keys for the organization. Requires website configure permission.",
 		})
 		.input(z.object({ organizationId: z.string() }))
+		.output(z.array(apiKeyOutputSchema))
 		.handler(async ({ context, input }) => {
 			await verifyOrganizationAccess(context, input.organizationId);
 			const rows = await context.db
@@ -140,6 +199,7 @@ export const apikeysRouter = {
 				"Returns a single API key by id with full details. Requires organization website configure permission.",
 		})
 		.input(z.object({ id: z.string() }))
+		.output(apiKeyFullOutputSchema)
 		.handler(async ({ context, input }) =>
 			mapKey(await getKeyWithAuth(context, input.id), true)
 		),
@@ -166,6 +226,7 @@ export const apikeysRouter = {
 				rateLimit: rateLimitSchema.optional(),
 			})
 		)
+		.output(apiKeyCreateOutputSchema)
 		.handler(async ({ context, input }) => {
 			await verifyOrganizationAccess(context, input.organizationId);
 
@@ -233,6 +294,7 @@ export const apikeysRouter = {
 				rateLimit: rateLimitSchema.optional(),
 			})
 		)
+		.output(apiKeyOutputSchema)
 		.handler(async ({ context, input }) => {
 			const key = await getKeyWithAuth(context, input.id);
 			const meta = getMeta(key);
@@ -284,6 +346,7 @@ export const apikeysRouter = {
 				"Revokes an API key. The key is disabled and cannot be used. Requires organization website configure permission.",
 		})
 		.input(z.object({ id: z.string() }))
+		.output(successOutputSchema)
 		.handler(async ({ context, input }) => {
 			const key = await getKeyWithAuth(context, input.id);
 			await context.db
@@ -307,6 +370,7 @@ export const apikeysRouter = {
 				"Rotates an API key, issuing a new secret. The old key is invalidated immediately. Returns the new secret once. Requires organization website configure permission.",
 		})
 		.input(z.object({ id: z.string() }))
+		.output(apiKeyCreateOutputSchema)
 		.handler(async ({ context, input }) => {
 			const key = await getKeyWithAuth(context, input.id);
 			const meta = getMeta(key);
@@ -361,6 +425,7 @@ export const apikeysRouter = {
 				"Permanently deletes an API key. Requires organization website configure permission.",
 		})
 		.input(z.object({ id: z.string() }))
+		.output(successOutputSchema)
 		.handler(async ({ context, input }) => {
 			const key = await getKeyWithAuth(context, input.id);
 			await context.db.delete(apikey).where(eq(apikey.id, input.id));
@@ -389,6 +454,7 @@ export const apikeysRouter = {
 				trackUsage: z.boolean().default(true),
 			})
 		)
+		.output(verifyOutputSchema)
 		.handler(async ({ context, input }) => {
 			// Use keys.extractKey() for header extraction
 			const secret = input.secret ?? keys.extractKey(context.headers);
@@ -441,6 +507,7 @@ export const apikeysRouter = {
 					return {
 						valid: false,
 						error: "Missing scopes",
+						errorCode: "MISSING_SCOPES",
 						scopes,
 						matched: input.requiredScopes.filter((s) => hasScope(scopes, s)),
 						missing: input.requiredScopes.filter((s) => !hasScope(scopes, s)),
