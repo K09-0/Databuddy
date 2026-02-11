@@ -74,10 +74,18 @@ const rpcHandler = new RPCHandler(appRouter, {
 	],
 });
 
-const HIDDEN_FROM_DOCS = ["revenue", "agent", "chat", "sso", "uptime", "billing"] as const;
+const HIDDEN_FROM_DOCS = [
+	"revenue",
+	"agent",
+	"chat",
+	"sso",
+	"uptime",
+	"billing",
+] as const;
 const docsRouter = Object.fromEntries(
 	Object.entries(appRouter).filter(
-		([key]) => !HIDDEN_FROM_DOCS.includes(key as (typeof HIDDEN_FROM_DOCS)[number])
+		([key]) =>
+			!HIDDEN_FROM_DOCS.includes(key as (typeof HIDDEN_FROM_DOCS)[number])
 	)
 ) as Omit<typeof appRouter, (typeof HIDDEN_FROM_DOCS)[number]>;
 
@@ -95,20 +103,53 @@ const openApiHandler = new OpenAPIHandler(docsRouter, {
 					description: "Databuddy analytics and link management API",
 				},
 				tags: [
-					{ name: "Annotations", description: "Timeline annotations for marking events" },
-					{ name: "API Keys", description: "API key creation, management, and verification" },
-					{ name: "Autocomplete", description: "Autocomplete suggestions for analytics filters" },
-					{ name: "Export", description: "Analytics data export in CSV, JSON, or other formats" },
-					{ name: "Flags", description: "Feature flags for gradual rollouts and A/B testing" },
+					{
+						name: "Annotations",
+						description: "Timeline annotations for marking events",
+					},
+					{
+						name: "API Keys",
+						description: "API key creation, management, and verification",
+					},
+					{
+						name: "Autocomplete",
+						description: "Autocomplete suggestions for analytics filters",
+					},
+					{
+						name: "Export",
+						description: "Analytics data export in CSV, JSON, or other formats",
+					},
+					{
+						name: "Flags",
+						description: "Feature flags for gradual rollouts and A/B testing",
+					},
 					{ name: "Funnels", description: "Funnel conversion analysis" },
 					{ name: "Goals", description: "Conversion goals and analytics" },
-					{ name: "Insights", description: "Smart insights and anomaly detection" },
+					{
+						name: "Insights",
+						description: "Smart insights and anomaly detection",
+					},
 					{ name: "Links", description: "Link shortening and management" },
-					{ name: "Mini Charts", description: "Mini chart data for dashboard widgets" },
-					{ name: "Organizations", description: "Workspace and organization management" },
-					{ name: "Preferences", description: "User preferences for date and time formatting" },
-					{ name: "Target Groups", description: "Audience targeting for feature flags" },
-					{ name: "Websites", description: "Website management, settings, and configuration" },
+					{
+						name: "Mini Charts",
+						description: "Mini chart data for dashboard widgets",
+					},
+					{
+						name: "Organizations",
+						description: "Workspace and organization management",
+					},
+					{
+						name: "Preferences",
+						description: "User preferences for date and time formatting",
+					},
+					{
+						name: "Target Groups",
+						description: "Audience targeting for feature flags",
+					},
+					{
+						name: "Websites",
+						description: "Website management, settings, and configuration",
+					},
 				],
 				security: [{ apiKey: [] }],
 				components: {
