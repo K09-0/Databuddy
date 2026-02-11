@@ -238,7 +238,7 @@ export function createMcpAgentTools() {
 			},
 		}),
 		get_data: tool({
-			description: `Batch 2-10 analytics queries in one call. PREFERRED when user asks for multiple metrics (traffic + top pages + referrers, etc). Types: ${Object.keys(QueryBuilders).join(", ")}. Use preset (e.g. last_7d, last_30d) or from/to dates.`,
+			description: `Batch 2-10 analytics queries in one call. PREFERRED when user asks for multiple metrics (traffic + top pages + referrers, etc). Types: ${Object.keys(QueryBuilders).join(", ")}. Use preset (e.g. last_7d, last_30d) or from/to dates. Supports filters (e.g. os_name eq "Mac" for slowest page for Mac users), groupBy, orderBy.`,
 			strict: true,
 			inputSchema: z.object({
 				websiteId: z.string(),
@@ -255,6 +255,31 @@ export function createMcpAgentTools() {
 								.enum(["minute", "hour", "day", "week", "month"])
 								.optional(),
 							limit: z.number().min(1).max(1000).optional(),
+							filters: z
+								.array(
+									z.object({
+										field: z.string(),
+										op: z.enum([
+											"eq",
+											"ne",
+											"contains",
+											"not_contains",
+											"starts_with",
+											"in",
+											"not_in",
+										]),
+										value: z.union([
+											z.string(),
+											z.number(),
+											z.array(z.union([z.string(), z.number()])),
+										]),
+										target: z.string().optional(),
+										having: z.boolean().optional(),
+									})
+								)
+								.optional(),
+							groupBy: z.array(z.string()).optional(),
+							orderBy: z.string().optional(),
 						})
 					)
 					.min(2)
