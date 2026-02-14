@@ -3,24 +3,20 @@
 import { GATED_FEATURES } from "@databuddy/shared/types/features";
 import { FunnelIcon } from "@phosphor-icons/react/dist/ssr/Funnel";
 import { TrendDownIcon } from "@phosphor-icons/react/dist/ssr/TrendDown";
-import { useAtomValue } from "jotai";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FeatureGate } from "@/components/feature-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
+import { useAutocompleteData } from "@/hooks/use-autocomplete";
 import { useDateFilters } from "@/hooks/use-date-filters";
 import {
-	type CreateFunnelData,
-	useAutocompleteData,
 	useFunnelAnalytics,
 	useFunnelAnalyticsByReferrer,
-	useFunnelPerformance,
 	useFunnels,
 } from "@/hooks/use-funnels";
-import { isAnalyticsRefreshingAtom } from "@/stores/jotai/filterAtoms";
-import type { FunnelAnalyticsData } from "@/types/funnels";
+import type { CreateFunnelData } from "@/types/funnels";
 import { WebsitePageHeader } from "../_components/website-page-header";
 import {
 	FunnelAnalytics,
@@ -51,138 +47,90 @@ function FunnelsListSkeleton() {
 export default function FunnelsPage() {
 	const { id } = useParams();
 	const websiteId = id as string;
-	const isRefreshing = useAtomValue(isAnalyticsRefreshingAtom);
-	const [expandedFunnelId, setExpandedFunnelId] = useState<string | null>(null);
-	const [selectedReferrer, setSelectedReferrer] = useState("all");
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const [editingFunnel, setEditingFunnel] = useState<FunnelItemData | null>(
-		null
-	);
-	const [deletingFunnelId, setDeletingFunnelId] = useState<string | null>(null);
-
 	const { formattedDateRangeState, dateRange } = useDateFilters();
 
+	const [expandedId, setExpandedId] = useState<string | null>(null);
+	const [selectedReferrer, setSelectedReferrer] = useState("all");
+	const [editing, setEditing] = useState<FunnelItemData | "new" | null>(null);
+	const [deletingId, setDeletingId] = useState<string | null>(null);
+
 	const {
-		data: funnels,
-		isLoading: funnelsLoading,
-		error: funnelsError,
-		createFunnel,
-		updateFunnel,
-		deleteFunnel,
+		funnels,
+		analyticsMap,
+		loadingIds,
+		isLoading,
+		isFetching,
+		error,
+		refreshAction,
+		createAction,
+		updateAction,
+		deleteAction,
 		isCreating,
 		isUpdating,
-	} = useFunnels(websiteId);
-
-	const { data: performanceData, isLoading: performanceLoading } =
-		useFunnelPerformance(websiteId, dateRange, !!funnels && funnels.length > 0);
+	} = useFunnels(websiteId, { dateRange });
 
 	const {
 		data: analyticsData,
 		isLoading: analyticsLoading,
 		error: analyticsError,
 		refetch: refetchAnalytics,
-	} = useFunnelAnalytics(websiteId, expandedFunnelId ?? "", dateRange, {
-		enabled: !!expandedFunnelId,
+	} = useFunnelAnalytics(websiteId, expandedId ?? "", dateRange, {
+		enabled: !!expandedId,
 	});
 
 	const {
-		data: referrerAnalyticsData,
-		isLoading: referrerAnalyticsLoading,
-		error: referrerAnalyticsError,
+		data: referrerData,
+		isLoading: referrerLoading,
+		error: referrerError,
 	} = useFunnelAnalyticsByReferrer(
 		websiteId,
-		expandedFunnelId ?? "",
+		expandedId ?? "",
 		{
 			start_date: formattedDateRangeState.startDate,
 			end_date: formattedDateRangeState.endDate,
 		},
-		{ enabled: !!expandedFunnelId }
+		{ enabled: !!expandedId }
 	);
 
-	const autocompleteQuery = useAutocompleteData(websiteId);
+	const autocomplete = useAutocompleteData(websiteId);
 
-	const analyticsMap = useMemo(() => {
-		const map = new Map<string, FunnelAnalyticsData | null>();
-
-		if (performanceData) {
-			for (const perf of performanceData) {
-				if (perf) {
-					map.set(perf.funnelId, perf as FunnelAnalyticsData);
-				}
-			}
-		}
-
-		if (expandedFunnelId && analyticsData) {
-			map.set(expandedFunnelId, analyticsData);
-		}
-
-		return map;
-	}, [performanceData, expandedFunnelId, analyticsData]);
-
-	const loadingAnalyticsIds = useMemo(() => {
-		const set = new Set<string>();
-		if (performanceLoading && funnels) {
-			for (const funnel of funnels) {
-				set.add(funnel.id);
-			}
-		}
-		if (expandedFunnelId && analyticsLoading) {
-			set.add(expandedFunnelId);
-		}
-		return set;
-	}, [performanceLoading, funnels, expandedFunnelId, analyticsLoading]);
-
-	const handleCreateFunnel = async (data: CreateFunnelData) => {
+	const handleCreate = async (data: CreateFunnelData) => {
 		try {
-			await createFunnel(data);
-			setIsDialogOpen(false);
-			setEditingFunnel(null);
-		} catch (error) {
-			console.error("Failed to create funnel:", error);
+			await createAction(data);
+			setEditing(null);
+		} catch (err) {
+			console.error("Failed to create funnel:", err);
 		}
 	};
 
-	const handleUpdateFunnel = async (funnel: FunnelItemData) => {
+	const handleUpdate = async (funnel: FunnelItemData) => {
 		try {
-			await updateFunnel({
-				funnelId: funnel.id,
-				updates: {
-					name: funnel.name,
-					description: funnel.description ?? "",
-					steps: funnel.steps,
-					filters: funnel.filters,
-					ignoreHistoricData: funnel.ignoreHistoricData,
-				},
+			await updateAction(funnel.id, {
+				name: funnel.name,
+				description: funnel.description ?? "",
+				steps: funnel.steps,
+				filters: funnel.filters,
+				ignoreHistoricData: funnel.ignoreHistoricData,
 			});
-			setIsDialogOpen(false);
-			setEditingFunnel(null);
-		} catch (error) {
-			console.error("Failed to update funnel:", error);
+			setEditing(null);
+		} catch (err) {
+			console.error("Failed to update funnel:", err);
 		}
 	};
 
-	const handleDeleteFunnel = async (funnelId: string) => {
+	const handleDelete = async (funnelId: string) => {
 		try {
-			await deleteFunnel(funnelId);
-			if (expandedFunnelId === funnelId) {
-				setExpandedFunnelId(null);
+			await deleteAction(funnelId);
+			if (expandedId === funnelId) {
+				setExpandedId(null);
 			}
-			setDeletingFunnelId(null);
-		} catch (error) {
-			console.error("Failed to delete funnel:", error);
+			setDeletingId(null);
+		} catch (err) {
+			console.error("Failed to delete funnel:", err);
 		}
 	};
 
-	const handleToggleFunnel = (funnelId: string) => {
-		setExpandedFunnelId(expandedFunnelId === funnelId ? null : funnelId);
-		setSelectedReferrer("all");
-	};
-
-	const handleReferrerChange = (referrer: string) => {
-		setSelectedReferrer(referrer);
-	};
-
-	if (funnelsError) {
+	if (error) {
 		return (
 			<div className="p-4">
 				<Card className="border-destructive/20 bg-destructive/5">
@@ -196,9 +144,7 @@ export default function FunnelsPage() {
 								Error loading funnel data
 							</p>
 						</div>
-						<p className="mt-2 text-destructive/80 text-sm">
-							{funnelsError.message}
-						</p>
+						<p className="mt-2 text-destructive/80 text-sm">{error.message}</p>
 					</CardContent>
 				</Card>
 			</div>
@@ -213,21 +159,19 @@ export default function FunnelsPage() {
 					currentUsage={funnels.length}
 					description="Track user journeys and optimize conversion drop-off points"
 					feature={GATED_FEATURES.FUNNELS}
-					hasError={!!funnelsError}
+					hasError={!!error}
 					icon={
 						<FunnelIcon
 							className="size-6 text-accent-foreground"
 							weight="duotone"
 						/>
 					}
-					isLoading={funnelsLoading}
-					isRefreshing={isRefreshing}
-					onCreateAction={() => {
-						setEditingFunnel(null);
-						setIsDialogOpen(true);
-					}}
+					isLoading={isLoading}
+					isRefreshing={isFetching}
+					onCreateAction={() => setEditing("new")}
+					onRefreshAction={refreshAction}
 					subtitle={
-						funnelsLoading
+						isLoading
 							? undefined
 							: `${funnels.length} funnel${funnels.length !== 1 ? "s" : ""}`
 					}
@@ -235,37 +179,34 @@ export default function FunnelsPage() {
 					websiteId={websiteId}
 				/>
 
-				{funnelsLoading ? (
+				{isLoading ? (
 					<FunnelsListSkeleton />
 				) : (
 					<FunnelsList
 						analyticsMap={analyticsMap}
-						expandedFunnelId={expandedFunnelId}
+						expandedFunnelId={expandedId}
 						funnels={funnels ?? []}
-						loadingAnalyticsIds={loadingAnalyticsIds}
-						onCreateFunnel={() => {
-							setEditingFunnel(null);
-							setIsDialogOpen(true);
+						loadingAnalyticsIds={loadingIds}
+						onCreateFunnel={() => setEditing("new")}
+						onDeleteFunnel={setDeletingId}
+						onEditFunnel={(funnel) => setEditing(funnel)}
+						onToggleFunnel={(funnelId) => {
+							setExpandedId(expandedId === funnelId ? null : funnelId);
+							setSelectedReferrer("all");
 						}}
-						onDeleteFunnel={setDeletingFunnelId}
-						onEditFunnel={(funnel) => {
-							setEditingFunnel(funnel);
-							setIsDialogOpen(true);
-						}}
-						onToggleFunnel={handleToggleFunnel}
 					>
 						{(funnel) => {
-							if (expandedFunnelId !== funnel.id) {
+							if (expandedId !== funnel.id) {
 								return null;
 							}
 
 							return (
 								<div className="space-y-4">
 									<FunnelAnalyticsByReferrer
-										data={referrerAnalyticsData}
-										error={referrerAnalyticsError}
-										isLoading={referrerAnalyticsLoading}
-										onReferrerChange={handleReferrerChange}
+										data={referrerData}
+										error={referrerError}
+										isLoading={referrerLoading}
+										onReferrerChange={setSelectedReferrer}
 									/>
 
 									<FunnelAnalytics
@@ -273,9 +214,7 @@ export default function FunnelsPage() {
 										error={analyticsError as Error | null}
 										isLoading={analyticsLoading}
 										onRetry={refetchAnalytics}
-										referrerAnalytics={
-											referrerAnalyticsData?.referrer_analytics
-										}
+										referrerAnalytics={referrerData?.referrer_analytics}
 										selectedReferrer={selectedReferrer}
 									/>
 								</div>
@@ -284,39 +223,34 @@ export default function FunnelsPage() {
 					</FunnelsList>
 				)}
 
-				{isDialogOpen && (
+				{editing !== null && (
 					<EditFunnelDialog
-						autocompleteData={autocompleteQuery.data}
+						autocompleteData={autocomplete.data}
 						funnel={
-							editingFunnel
+							typeof editing === "object"
 								? {
-										...editingFunnel,
-										createdAt: String(editingFunnel.createdAt),
-										updatedAt: String(editingFunnel.updatedAt),
+										...editing,
+										createdAt: String(editing.createdAt),
+										updatedAt: String(editing.updatedAt),
 									}
 								: null
 						}
 						isCreating={isCreating}
-						isOpen={isDialogOpen}
+						isOpen
 						isUpdating={isUpdating}
-						onClose={() => {
-							setIsDialogOpen(false);
-							setEditingFunnel(null);
-						}}
-						onCreate={handleCreateFunnel}
-						onSubmit={handleUpdateFunnel}
+						onClose={() => setEditing(null)}
+						onCreate={handleCreate}
+						onSubmit={handleUpdate}
 					/>
 				)}
 
-				{!!deletingFunnelId && (
+				{!!deletingId && (
 					<DeleteDialog
 						confirmLabel="Delete Funnel"
-						isOpen={!!deletingFunnelId}
+						isOpen={!!deletingId}
 						itemName="this funnel"
-						onClose={() => setDeletingFunnelId(null)}
-						onConfirm={() =>
-							deletingFunnelId && handleDeleteFunnel(deletingFunnelId)
-						}
+						onClose={() => setDeletingId(null)}
+						onConfirm={() => deletingId && handleDelete(deletingId)}
 						title="Delete Funnel"
 					/>
 				)}

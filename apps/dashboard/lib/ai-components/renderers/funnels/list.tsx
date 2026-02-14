@@ -23,12 +23,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	type CreateFunnelData,
-	type Funnel,
-	useFunnels,
-} from "@/hooks/use-funnels";
+import { useFunnels } from "@/hooks/use-funnels";
 import { fromNow } from "@/lib/time";
+import type { CreateFunnelData, Funnel } from "@/types/funnels";
 import type { BaseComponentProps, FunnelStepInput } from "../../types";
 
 interface FunnelItem {
@@ -164,9 +161,9 @@ export function FunnelsListRenderer({
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 
 	const {
-		createFunnel,
-		updateFunnel,
-		deleteFunnel,
+		createAction,
+		updateAction,
+		deleteAction,
 		isCreating,
 		isUpdating,
 		isDeleting,
@@ -190,13 +187,13 @@ export function FunnelsListRenderer({
 	const handleCreate = useCallback(
 		async (data: CreateFunnelData) => {
 			try {
-				await createFunnel(data);
+				await createAction(data);
 				closeDialog();
 			} catch {
 				toast.error("Failed to create funnel");
 			}
 		},
-		[createFunnel, closeDialog]
+		[createAction, closeDialog]
 	);
 
 	const handleUpdate = useCallback(
@@ -205,22 +202,19 @@ export function FunnelsListRenderer({
 				return;
 			}
 			try {
-				await updateFunnel({
-					funnelId: editingFunnel.id,
-					updates: {
-						name: funnel.name,
-						description: funnel.description ?? undefined,
-						steps: funnel.steps,
-						filters: funnel.filters,
-						ignoreHistoricData: funnel.ignoreHistoricData,
-					},
+				await updateAction(editingFunnel.id, {
+					name: funnel.name,
+					description: funnel.description ?? undefined,
+					steps: funnel.steps,
+					filters: funnel.filters,
+					ignoreHistoricData: funnel.ignoreHistoricData,
 				});
 				closeDialog();
 			} catch {
 				toast.error("Failed to update funnel");
 			}
 		},
-		[editingFunnel, updateFunnel, closeDialog]
+		[editingFunnel, updateAction, closeDialog]
 	);
 
 	const confirmDelete = useCallback(async () => {
@@ -228,12 +222,12 @@ export function FunnelsListRenderer({
 			return;
 		}
 		try {
-			await deleteFunnel(deletingId);
+			await deleteAction(deletingId);
 			setDeletingId(null);
 		} catch {
 			toast.error("Failed to delete funnel");
 		}
-	}, [deletingId, deleteFunnel]);
+	}, [deletingId, deleteAction]);
 
 	// Convert FunnelItem to Funnel for the dialog
 	const funnelForDialog: Funnel | null = editingFunnel

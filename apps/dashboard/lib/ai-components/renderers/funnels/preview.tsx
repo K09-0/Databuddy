@@ -16,12 +16,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useChat } from "@/contexts/chat-context";
-import {
-	type CreateFunnelData,
-	type Funnel,
-	useFunnels,
-} from "@/hooks/use-funnels";
+import { useFunnels } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
+import type { CreateFunnelData, Funnel } from "@/types/funnels";
 import type { BaseComponentProps, FunnelStepInput } from "../../types";
 
 interface FunnelPreviewData {
@@ -84,7 +81,7 @@ export function FunnelPreviewRenderer({
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isConfirming, setIsConfirming] = useState(false);
 
-	const { createFunnel, isCreating } = useFunnels(websiteId);
+	const { createAction, isCreating } = useFunnels(websiteId);
 
 	const config = MODE_CONFIG[mode];
 	const isLoading = status === "streaming" || status === "submitted";
@@ -111,13 +108,13 @@ export function FunnelPreviewRenderer({
 	const handleCreateFromDialog = useCallback(
 		async (data: CreateFunnelData) => {
 			try {
-				await createFunnel(data);
+				await createAction(data);
 				setIsDialogOpen(false);
 			} catch {
 				toast.error("Failed to create funnel");
 			}
 		},
-		[createFunnel]
+		[createAction]
 	);
 
 	const handleUpdateFromDialog = useCallback((_funnel: Funnel) => {

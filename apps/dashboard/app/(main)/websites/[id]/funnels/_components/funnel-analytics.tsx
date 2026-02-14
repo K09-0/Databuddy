@@ -17,8 +17,8 @@ import { StatCard } from "@/components/analytics/stat-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChartPreferences } from "@/hooks/use-chart-preferences";
-import type { FunnelAnalyticsByReferrerResult } from "@/hooks/use-funnels";
 import type {
+	FunnelAnalyticsByReferrerResult,
 	FunnelAnalyticsData,
 	FunnelTimeSeriesPoint,
 } from "@/types/funnels";

@@ -45,11 +45,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { operatorOptions } from "@/hooks/use-filters";
 import {
 	type AutocompleteData,
 	useAutocompleteData,
-} from "@/hooks/use-funnels";
+} from "@/hooks/use-autocomplete";
+import { operatorOptions } from "@/hooks/use-filters";
 import { cn } from "@/lib/utils";
 
 type FilterOption = (typeof filterOptions)[number];

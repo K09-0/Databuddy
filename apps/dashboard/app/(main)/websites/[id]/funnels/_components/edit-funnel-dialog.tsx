@@ -36,15 +36,15 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import type { AutocompleteData } from "@/hooks/use-autocomplete";
 import { goalFunnelOperatorOptions, useFilters } from "@/hooks/use-filters";
+import { cn } from "@/lib/utils";
 import type {
-	AutocompleteData,
 	CreateFunnelData,
 	Funnel,
 	FunnelFilter,
 	FunnelStep,
-} from "@/hooks/use-funnels";
-import { cn } from "@/lib/utils";
+} from "@/types/funnels";
 
 const defaultFilter: FunnelFilter = {
 	field: "browser_name",

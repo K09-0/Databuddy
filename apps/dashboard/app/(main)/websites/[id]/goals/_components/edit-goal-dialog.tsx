@@ -27,8 +27,8 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import type { AutocompleteData } from "@/hooks/use-autocomplete";
 import { goalFunnelOperatorOptions, useFilters } from "@/hooks/use-filters";
-import type { AutocompleteData } from "@/hooks/use-funnels";
 import type { CreateGoalData, Goal } from "@/hooks/use-goals";
 
 const defaultFilter: GoalFilter = {

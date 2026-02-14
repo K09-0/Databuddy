@@ -9,8 +9,8 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { FaviconImage } from "@/components/analytics/favicon-image";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FunnelAnalyticsByReferrerResult } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
+import type { FunnelAnalyticsByReferrerResult } from "@/types/funnels";
 
 interface FunnelAnalyticsByReferrerProps {
 	onReferrerChange?: (referrer: string) => void;

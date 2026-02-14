@@ -1,3 +1,37 @@
+export interface FunnelStep {
+	type: "PAGE_VIEW" | "EVENT" | "CUSTOM";
+	target: string;
+	name: string;
+	conditions?: Record<string, unknown>;
+}
+
+export interface FunnelFilter {
+	field: string;
+	operator: "equals" | "contains" | "not_equals" | "in" | "not_in";
+	value: string | string[];
+	label?: string;
+}
+
+export interface Funnel {
+	id: string;
+	name: string;
+	description?: string | null;
+	steps: FunnelStep[];
+	filters?: FunnelFilter[];
+	ignoreHistoricData?: boolean;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface CreateFunnelData {
+	name: string;
+	description?: string;
+	steps: FunnelStep[];
+	filters?: FunnelFilter[];
+	ignoreHistoricData?: boolean;
+}
+
 export interface StepErrorInsight {
 	message: string;
 	error_type: string;
@@ -46,4 +80,16 @@ export interface FunnelAnalyticsData {
 	steps_analytics: FunnelStepAnalytics[];
 	time_series?: FunnelTimeSeriesPoint[];
 	error_insights?: FunnelErrorInsights;
+}
+
+export interface FunnelAnalyticsByReferrerResult {
+	referrer: string;
+	referrer_parsed: {
+		name: string;
+		type: string;
+		domain: string;
+	};
+	total_users: number;
+	completed_users: number;
+	conversion_rate: number;
 }

@@ -58,8 +58,8 @@ import {
 	SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAutocompleteData } from "@/hooks/use-autocomplete";
 import { operatorOptions } from "@/hooks/use-filters";
-import { useAutocompleteData } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
 import { CustomQueryBuilder } from "./custom-query-builder";
 import { useDashboardData } from "./hooks/use-dashboard-data";

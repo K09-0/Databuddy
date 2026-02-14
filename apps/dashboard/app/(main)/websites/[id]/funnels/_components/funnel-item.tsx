@@ -16,9 +16,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FunnelFilter, FunnelStep } from "@/hooks/use-funnels";
 import { cn } from "@/lib/utils";
-import type { FunnelAnalyticsData } from "@/types/funnels";
+import type {
+	FunnelAnalyticsData,
+	FunnelFilter,
+	FunnelStep,
+} from "@/types/funnels";
 
 export interface FunnelItemData {
 	id: string;

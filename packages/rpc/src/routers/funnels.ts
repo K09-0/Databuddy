@@ -70,7 +70,13 @@ const invalidateFunnelsCache = async (websiteId: string, funnelId?: string) => {
 	if (funnelId) {
 		keys.push(`byId:${funnelId}:${websiteId}`);
 	}
-	await Promise.all(keys.map((key) => cache.invalidateByKey(key)));
+	const operations: Promise<void>[] = keys.map((key) =>
+		cache.invalidateByKey(key)
+	);
+	if (funnelId) {
+		operations.push(cache.invalidateByTags([`funnel:${funnelId}`]));
+	}
+	await Promise.all(operations);
 };
 
 const toAnalyticsSteps = (steps: Step[]): AnalyticsStep[] =>
@@ -450,6 +456,7 @@ export const funnelsRouter = {
 				key: cacheKey,
 				ttl: ANALYTICS_CACHE_TTL,
 				tables: ["funnelDefinitions"],
+				tag: `funnel:${input.funnelId}`,
 				queryFn: () =>
 					processFunnelAnalytics(
 						toAnalyticsSteps(steps),
@@ -525,6 +532,7 @@ export const funnelsRouter = {
 				key: cacheKey,
 				ttl: ANALYTICS_CACHE_TTL,
 				tables: ["funnelDefinitions"],
+				tag: `funnel:${input.funnelId}`,
 				queryFn: () =>
 					processFunnelAnalyticsByReferrer(
 						toAnalyticsSteps(steps),
