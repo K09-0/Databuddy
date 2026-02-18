@@ -32,24 +32,19 @@ const analyticsData = [
 
 export const Description = () => {
 	const [currentIndex, setCurrentIndex] = useState(0);
-	const [data, setData] = useState(analyticsData);
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			setCurrentIndex((prevIndex) => (prevIndex + 1) % data.length);
+			setCurrentIndex((prevIndex) => (prevIndex + 1) % analyticsData.length);
 		}, 5000);
 
 		return () => clearInterval(interval);
-	}, [data.length]);
+	}, []);
 
-	useEffect(() => {
-		setData((prevData) =>
-			prevData.map((item, index) => ({
-				...item,
-				isActive: index === currentIndex,
-			}))
-		);
-	}, [currentIndex]);
+	const data = analyticsData.map((item, index) => ({
+		...item,
+		isActive: index === currentIndex,
+	}));
 
 	const titleVariants: Variants = {
 		active: {

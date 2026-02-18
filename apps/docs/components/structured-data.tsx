@@ -50,6 +50,8 @@ interface StructuredDataProps {
 	elements?: ElementItem[];
 }
 
+const EMPTY_ELEMENTS: ElementItem[] = [];
+
 function planToOffer(plan: RawPlan, baseUrl: string) {
 	const BLOCK_UNITS_FOR_EVENTS = 1000; // price is expressed per 1,000 events
 	const toUnitCode = (interval: "day" | "month" | null | undefined) =>
@@ -170,7 +172,7 @@ export function StructuredData({
 	baseUrl = "https://www.databuddy.cc",
 	logoUrl = `${"https://www.databuddy.cc"}/logo.png`,
 	page,
-	elements = [],
+	elements = EMPTY_ELEMENTS,
 }: StructuredDataProps) {
 	const abs = (u?: string) =>
 		u ? (u.startsWith("http") ? u : `${baseUrl}${u}`) : undefined;

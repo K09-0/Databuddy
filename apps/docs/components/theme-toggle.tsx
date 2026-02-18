@@ -2,7 +2,6 @@
 
 import { MonitorIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,15 +10,10 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-	const { theme, setTheme } = useTheme();
-	const [mounted, setMounted] = useState(false);
+	const { theme, setTheme, resolvedTheme } = useTheme();
 	const currentTheme = theme ?? "system";
 
-	useEffect(() => {
-		setMounted(true);
-	}, []);
-
-	const switchTheme = () => {
+	const toggleTheme = () => {
 		if (currentTheme === "system") {
 			setTheme("light");
 		} else if (currentTheme === "light") {
@@ -28,23 +22,6 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
 			setTheme("system");
 		}
 	};
-
-	const toggleTheme = () => {
-		switchTheme();
-	};
-
-	if (!mounted) {
-		return (
-			<Button
-				className={cn("relative size-8", className)}
-				size="sm"
-				variant="ghost"
-			>
-				<MonitorIcon className="size-4" size={16} weight="duotone" />
-				<span className="sr-only">Toggle theme</span>
-			</Button>
-		);
-	}
 
 	return (
 		<Button

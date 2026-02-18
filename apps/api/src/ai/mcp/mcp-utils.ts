@@ -70,6 +70,12 @@ export function buildBatchQueryRequests(
 const SCHEMA_SUMMARY =
 	"analytics.events (client_id, path, time, country, device_type, referrer, utm_*); analytics.error_spans; analytics.web_vitals_hourly. Filter: client_id = {websiteId:String}.";
 
+interface QueryTypeInfo {
+	description: string;
+	allowedFilters?: string[];
+	customizable?: boolean;
+}
+
 export function getQueryTypeDescriptions(): Record<string, string> {
 	const result: Record<string, string> = {};
 	for (const [key, config] of Object.entries(QueryBuilders)) {
@@ -77,6 +83,25 @@ export function getQueryTypeDescriptions(): Record<string, string> {
 			"Analytics: " +
 			key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 		result[key] = config?.meta?.description ?? fallback;
+	}
+	return result;
+}
+
+export function getQueryTypeDetails(): Record<string, QueryTypeInfo> {
+	const result: Record<string, QueryTypeInfo> = {};
+	for (const [key, config] of Object.entries(QueryBuilders)) {
+		const fallback =
+			"Analytics: " +
+			key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+		result[key] = {
+			description: config?.meta?.description ?? fallback,
+			...(config?.allowedFilters?.length && {
+				allowedFilters: config.allowedFilters,
+			}),
+			...(config?.customizable !== undefined && {
+				customizable: config.customizable,
+			}),
+		};
 	}
 	return result;
 }

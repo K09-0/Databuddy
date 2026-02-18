@@ -61,7 +61,7 @@ export default function FlagsLayout({
 		...orpc.targetGroups.list.queryOptions({ input: { websiteId } }),
 	});
 
-	const templates = useMemo(() => HARDCODED_TEMPLATES, []);
+	const templates = HARDCODED_TEMPLATES;
 
 	const activeFlags = useMemo(
 		() => flags?.filter((f) => f.status !== "archived") ?? [],

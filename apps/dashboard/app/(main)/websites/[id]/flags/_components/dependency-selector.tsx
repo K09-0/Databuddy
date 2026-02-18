@@ -18,10 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import type { DependencySelectorProps, Flag } from "./types";
 
+const EMPTY_VALUES: string[] = [];
+const EMPTY_FLAGS: Flag[] = [];
+
 export function DependencySelector({
-	value = [],
+	value = EMPTY_VALUES,
 	onChange,
-	availableFlags = [],
+	availableFlags = EMPTY_FLAGS,
 	currentFlagKey,
 }: DependencySelectorProps) {
 	const [isOpen, setIsOpen] = useState(false);

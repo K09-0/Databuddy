@@ -65,5 +65,3 @@ export const ReferrerSourceCell: React.FC<ReferrerSourceCellProps> = ({
 		</a>
 	);
 };
-
-export default ReferrerSourceCell;

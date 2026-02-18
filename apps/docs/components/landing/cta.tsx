@@ -5,7 +5,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import LiquidChrome from "../bits/liquid";
+import { LiquidChrome } from "../bits/liquid";
 
 const ctaItems = [
 	{

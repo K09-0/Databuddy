@@ -491,7 +491,7 @@ const FeatureFlagsFeature = () => {
 								<motion.div
 									animate={{ scale: 1 }}
 									className="h-full w-full rounded-full bg-primary"
-									initial={{ scale: 0 }}
+									initial={{ scale: 0.95 }}
 								/>
 							)}
 						</div>

@@ -1,7 +1,12 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { type ButtonHTMLAttributes, useEffect, useState } from "react";
+import {
+	type ButtonHTMLAttributes,
+	useCallback,
+	useRef,
+	useState,
+} from "react";
 import { cn } from "@/lib/utils";
 
 interface CopyButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,12 +15,18 @@ interface CopyButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function CopyButton({ value, className, ...props }: CopyButtonProps) {
 	const [hasCopied, setHasCopied] = useState(false);
+	const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-	useEffect(() => {
-		setTimeout(() => {
+	const handleCopyAction = useCallback(() => {
+		navigator.clipboard.writeText(value);
+		setHasCopied(true);
+		if (timeoutRef.current) {
+			clearTimeout(timeoutRef.current);
+		}
+		timeoutRef.current = setTimeout(() => {
 			setHasCopied(false);
 		}, 2000);
-	}, [hasCopied]);
+	}, [value]);
 
 	return (
 		<button
@@ -23,10 +34,7 @@ export function CopyButton({ value, className, ...props }: CopyButtonProps) {
 				"relative z-10 inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
 				className
 			)}
-			onClick={() => {
-				navigator.clipboard.writeText(value);
-				setHasCopied(true);
-			}}
+			onClick={handleCopyAction}
 			{...props}
 		>
 			<span className="sr-only">Copy</span>

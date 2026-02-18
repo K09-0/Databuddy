@@ -34,10 +34,7 @@ export default function PricingPage() {
 		return estimateTieredOverageCostFromTiers(over, bestPlan.eventTiers);
 	}, [bestPlan, monthlyEvents]);
 
-	const estimatedMonthly = useMemo(
-		() => (bestPlan ? bestPlan.priceMonthly : 0) + estimatedOverage,
-		[bestPlan, estimatedOverage]
-	);
+	const estimatedMonthly = (bestPlan ? bestPlan.priceMonthly : 0) + estimatedOverage;
 
 	return (
 		<div className="px-4 pt-10 sm:px-6 lg:px-8">

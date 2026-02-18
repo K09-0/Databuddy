@@ -195,5 +195,3 @@ export const LiquidChrome: React.FC<LiquidChromeProps> = ({
 
 	return <div className="h-full w-full" ref={containerRef} {...props} />;
 };
-
-export default LiquidChrome;

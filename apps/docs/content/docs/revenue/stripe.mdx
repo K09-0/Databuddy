@@ -12,9 +12,9 @@ Connect Stripe payments to Databuddy's analytics to track revenue, conversion fu
 ## Overview
 
 The Stripe integration captures:
-- **Payment Intents**: Track payment attempts, successes, and failures
-- **Charges**: Monitor successful payments and refunds
-- **Refunds**: Track refund events and amounts
+- **One-Time Payments**: Track payment attempts, successes, and failures via PaymentIntents
+- **Subscription Payments**: Track recurring invoice payments, renewals, and failures
+- **Refunds**: Track refund events and amounts via charge events
 - **Revenue Attribution**: Link payments to specific user sessions and marketing campaigns
 
 ## Quick Setup (Webhooks Only)
@@ -55,13 +55,21 @@ Click the copy button next to the URL to copy it to your clipboard.
 4. Search for and select the following events:
 
 **Required events** (must be selected):
-- `payment_intent.succeeded`
-- `charge.refunded`
+- `payment_intent.succeeded` - Captures all successful payments (one-time and subscription)
+- `charge.refunded` - Captures refund events
 
-**Optional events** (recommended for more insights):
-- `payment_intent.payment_failed`
-- `payment_intent.canceled`
-- `invoice.payment_succeeded`
+**Recommended events** (for subscription and failure tracking):
+- `invoice.paid` - Catches subscription payments without a PaymentIntent (credit balance, 100% coupons)
+- `invoice.payment_failed` - Tracks failed subscription payment attempts
+- `payment_intent.payment_failed` - Tracks failed one-time payment attempts
+- `payment_intent.canceled` - Tracks canceled payment attempts
+
+**Subscription lifecycle events** (for tracking subscriber state):
+- `customer.subscription.created` - When a new subscription starts
+- `customer.subscription.updated` - Plan changes, status transitions
+- `customer.subscription.deleted` - When a subscription ends
+- `customer.subscription.paused` - When a subscription is paused
+- `customer.subscription.resumed` - When a paused subscription resumes
 
 5. Click **Add endpoint**
 
@@ -93,6 +101,37 @@ The Stripe section will now show a checkmark indicating it's configured.
 
 </Step>
 </Steps>
+
+## How Subscriptions Work
+
+When a customer subscribes via Stripe Checkout, the payment chain is:
+
+**Checkout Session → Subscription → Invoice → PaymentIntent**
+
+Databuddy handles this automatically through two event paths:
+
+1. **`payment_intent.succeeded`** - Fires when the PaymentIntent on a subscription invoice succeeds. Databuddy detects it as a subscription by checking for the `invoice` field on the PaymentIntent.
+2. **`invoice.paid`** - Catches edge cases where an invoice is paid without a PaymentIntent (credit balance, 100% coupon, free trials). If the invoice has a PaymentIntent, Databuddy skips it to avoid duplicate tracking.
+
+For failed subscription payments, `invoice.payment_failed` provides richer context including the subscription ID and billing reason.
+
+### Subscription Lifecycle Tracking
+
+When you enable the `customer.subscription.*` events, Databuddy tracks the full subscription lifecycle:
+
+| Event | What It Captures |
+|-------|-----------------|
+| `created` | New subscription started (status may be `active`, `trialing`, or `incomplete`) |
+| `updated` | Plan changes, status transitions (e.g. `active` to `past_due`) |
+| `deleted` | Subscription fully ended |
+| `paused` | Subscription paused (no invoices generated) |
+| `resumed` | Paused subscription resumed |
+
+Lifecycle events are stored separately from revenue transactions, so they do not affect revenue totals. Each event records the subscription status, billing interval, customer ID, and period metadata.
+
+<Callout type="info">
+  You do not need to use Stripe's expand parameter. Webhook payloads include the full object, not just IDs. The expand parameter is only needed when fetching data from the Stripe API directly.
+</Callout>
 
 ## Advanced: Session Attribution
 
@@ -136,7 +175,7 @@ await fetch('/create-checkout-session', {
 });`}
 </CodeBlock>
 
-#### Server-Side: Node.js/JavaScript
+#### Server-Side: One-Time Payment (Node.js)
 
 <CodeBlock language="javascript">
 {`const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -156,13 +195,46 @@ const session = await stripe.checkout.sessions.create({
   // REQUIRED: Set metadata on payment intent (this propagates to all webhook events)
   payment_intent_data: {
     metadata: {
-      databuddy_client_id: 'your_databuddy_client_id', // Required for webhook processing
-      databuddy_session_id: sessionId, // Required for analytics tracking
-      databuddy_anonymous_id: anonymousId, // Optional: For anonymous user tracking
+      databuddy_client_id: 'your_databuddy_client_id',
+      databuddy_session_id: sessionId,
+      databuddy_anonymous_id: anonymousId,
     },
   },
 });`}
 </CodeBlock>
+
+#### Server-Side: Subscription (Node.js)
+
+<CodeBlock language="javascript">
+{`const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+const session = await stripe.checkout.sessions.create({
+  payment_method_types: ['card'],
+  mode: 'subscription',
+  line_items: [
+    {
+      price: 'price_monthly_1234567890',
+      quantity: 1,
+    },
+  ],
+  success_url: 'https://yoursite.com/success?session_id={CHECKOUT_SESSION_ID}',
+  cancel_url: 'https://yoursite.com/cancel',
+  
+  // For subscriptions, use subscription_data.metadata
+  // This metadata persists on the subscription and its invoices
+  subscription_data: {
+    metadata: {
+      databuddy_client_id: 'your_databuddy_client_id',
+      databuddy_session_id: sessionId,
+      databuddy_anonymous_id: anonymousId,
+    },
+  },
+});`}
+</CodeBlock>
+
+<Callout type="warn">
+  For one-time payments, use \`payment_intent_data.metadata\`. For subscriptions, use \`subscription_data.metadata\`. Using the wrong one means metadata will not propagate to webhook events.
+</Callout>
 
 #### Server-Side: Python
 
@@ -171,6 +243,7 @@ const session = await stripe.checkout.sessions.create({
 
 stripe.api_key = os.environ['STRIPE_SECRET_KEY']
 
+# One-time payment
 session = stripe.checkout.Session.create(
     payment_method_types=['card'],
     mode='payment',
@@ -180,9 +253,26 @@ session = stripe.checkout.Session.create(
     }],
     success_url='https://yoursite.com/success?session_id={CHECKOUT_SESSION_ID}',
     cancel_url='https://yoursite.com/cancel',
-    
-    # REQUIRED: Set metadata on payment intent (this propagates to all webhook events)
     payment_intent_data={
+        'metadata': {
+            'databuddy_client_id': 'your_databuddy_client_id',
+            'databuddy_session_id': session_id,
+            'databuddy_anonymous_id': anonymous_id,
+        },
+    },
+)
+
+# Subscription
+session = stripe.checkout.Session.create(
+    payment_method_types=['card'],
+    mode='subscription',
+    line_items=[{
+        'price': 'price_monthly_1234567890',
+        'quantity': 1,
+    }],
+    success_url='https://yoursite.com/success?session_id={CHECKOUT_SESSION_ID}',
+    cancel_url='https://yoursite.com/cancel',
+    subscription_data={
         'metadata': {
             'databuddy_client_id': 'your_databuddy_client_id',
             'databuddy_session_id': session_id,
@@ -244,7 +334,7 @@ function CheckoutButton({ priceId, productName }) {
 | `databuddy_anonymous_id` | No | Anonymous user ID from `getAnonymousId()` or `localStorage.getItem('did')` |
 
 <Callout type="info">
-  Only metadata in `payment_intent_data.metadata` propagates to webhooks. This is the single source of truth for all payment events.
+  For one-time payments, use `payment_intent_data.metadata` which propagates to PaymentIntent webhook events. For subscriptions, use `subscription_data.metadata` which persists on the subscription and its invoices.
 </Callout>
 
 ## Testing
@@ -276,9 +366,10 @@ function CheckoutButton({ priceId, productName }) {
 **Problem**: Webhook receives events but shows "Missing required client_id" error
 
 **Solutions**:
-- Ensure `databuddy_client_id` is set in `payment_intent_data.metadata`
+- For one-time payments: set `databuddy_client_id` in `payment_intent_data.metadata`
+- For subscriptions: set `databuddy_client_id` in `subscription_data.metadata`
 - Verify the databuddy_client_id matches your Databuddy Client ID exactly
-- Don't set metadata on checkout session - only use `payment_intent_data.metadata`
+- Don't set metadata directly on the checkout session object
 
 ### Session ID Not Linking
 

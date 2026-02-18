@@ -25,15 +25,17 @@ export const AutocompleteInput = memo(
 		const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>(
 			[]
 		);
+		const [prevValue, setPrevValue] = useState(value);
 		const [localValue, setLocalValue] = useState(value);
 		const containerRef = useRef<HTMLDivElement>(null);
 		const onValueChangeRef = useRef(onValueChange);
 
 		onValueChangeRef.current = onValueChange;
 
-		useEffect(() => {
+		if (prevValue !== value) {
+			setPrevValue(value);
 			setLocalValue(value);
-		}, [value]);
+		}
 
 		useEffect(() => {
 			const handleClickOutside = (event: MouseEvent) => {

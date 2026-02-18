@@ -166,9 +166,9 @@ export function WebsitePageHeader({
 							{typeof limit === "number" ? limit.toLocaleString() : "available"}{" "}
 							slots.
 							<br />
-							<a className="underline" href="/billing">
+							<Link className="underline" href="/billing">
 								Upgrade your plan
-							</a>{" "}
+							</Link>{" "}
 							to create more.
 						</p>
 					)}
@@ -350,9 +350,9 @@ export function WebsitePageHeader({
 												: "available"}
 											.
 											<br />
-											<a className="underline" href="/billing">
+											<Link className="underline" href="/billing">
 												Upgrade to create more
-											</a>
+											</Link>
 											.
 										</p>
 									</TooltipContent>

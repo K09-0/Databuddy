@@ -19,6 +19,7 @@ const ATTRIBUTION_CTE = `
 			(r.owner_id = {websiteId:String} OR r.website_id = {websiteId:String})
 			AND r.created >= toDateTime({startDate:String})
 			AND r.created <= toDateTime(concat({endDate:String}, ' 23:59:59'))
+			AND r.type != 'subscription_event'
 	),
 	customer_identity_map AS (
 		SELECT 

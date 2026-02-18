@@ -4,20 +4,18 @@ import { CaretDownIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useSearchContext } from "fumadocs-ui/provider";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { AsideLink } from "@/components/ui/aside-link";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { contents } from "./sidebar-content";
 
 export default function CustomSidebar() {
-	const [currentOpen, setCurrentOpen] = useState<number>(0);
-	const [nestedOpen, setNestedOpen] = useState<Set<string>>(new Set());
 	const pathname = usePathname();
 	const { setOpenSearch } = useSearchContext();
 
-	const getDefaultValue = useCallback(() => {
-		const defaultValue = contents.findIndex((item) =>
+	const { defaultOpen, defaultNestedOpen } = useMemo(() => {
+		const idx = contents.findIndex((item) =>
 			item.list.some((listItem) => {
 				if (listItem.href === pathname) {
 					return true;
@@ -28,12 +26,6 @@ export default function CustomSidebar() {
 				return false;
 			})
 		);
-		return defaultValue === -1 ? 0 : defaultValue;
-	}, [pathname]);
-
-	useEffect(() => {
-		setCurrentOpen(getDefaultValue());
-		// Auto-open nested items that contain the current path
 		const openNested = new Set<string>();
 		for (const section of contents) {
 			for (const item of section.list) {
@@ -47,8 +39,18 @@ export default function CustomSidebar() {
 				}
 			}
 		}
-		setNestedOpen(openNested);
-	}, [getDefaultValue, pathname]);
+		return { defaultOpen: idx === -1 ? 0 : idx, defaultNestedOpen: openNested };
+	}, [pathname]);
+
+	const [prevPathname, setPrevPathname] = useState(pathname);
+	const [currentOpen, setCurrentOpen] = useState<number>(defaultOpen);
+	const [nestedOpen, setNestedOpen] = useState<Set<string>>(defaultNestedOpen);
+
+	if (prevPathname !== pathname) {
+		setPrevPathname(pathname);
+		setCurrentOpen(defaultOpen);
+		setNestedOpen(defaultNestedOpen);
+	}
 
 	const handleSearch = () => {
 		setOpenSearch(true);

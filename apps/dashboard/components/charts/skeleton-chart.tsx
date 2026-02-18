@@ -13,6 +13,8 @@ interface SkeletonChartProps {
 	className?: string;
 }
 
+const SKELETON_BAR_HEIGHTS = [78, 95, 42, 110, 63, 87, 55];
+
 export function SkeletonChart({
 	height = 300,
 	title,
@@ -38,13 +40,13 @@ export function SkeletonChart({
 			<CardContent style={{ height: `${height}px` }}>
 				<div className="relative h-full w-full overflow-hidden">
 					<div className="absolute right-0 bottom-12 left-0 flex items-end justify-between px-4">
-						{Array.from({ length: 7 }).map((_, i) => (
+						{SKELETON_BAR_HEIGHTS.map((barHeight, i) => (
 							<div
 								className="animate-pulse rounded-t-md bg-foreground/10"
 								key={`skeleton-${i + 1}`}
 								style={{
 									width: "12%",
-									height: `${20 + Math.random() * 100}px`,
+									height: `${barHeight}px`,
 									animationDelay: `${i * 100}ms`,
 									opacity: 0.8,
 								}}

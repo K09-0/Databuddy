@@ -129,7 +129,7 @@ function FlipCard() {
 							{sponsors.map((sponsor, index) => (
 								<motion.div
 									animate={{ scale: 1, opacity: 1 }}
-									initial={{ scale: 0, opacity: 0 }}
+									initial={{ scale: 0.95, opacity: 0 }}
 									key={sponsor.id}
 									transition={{ delay: 0.6 + index * 0.1, duration: 0.3 }}
 								>

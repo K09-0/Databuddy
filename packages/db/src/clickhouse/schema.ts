@@ -712,14 +712,18 @@ export interface UptimeMonitor {
 
 /**
  * Revenue transaction from payment providers
+ *
+ * type: "sale" for one-time payments, "subscription" for recurring payments,
+ *       "refund" for refunds, "subscription_event" for lifecycle events (created, canceled, etc.)
+ * status: payment state or subscription state from the provider
  */
 export interface RevenueTransaction {
 	owner_id: string;
 	website_id?: string;
 	transaction_id: string;
 	provider: "stripe" | "paddle";
-	type: "sale" | "refund" | "subscription";
-	status: "completed" | "refunded" | "pending";
+	type: "sale" | "refund" | "subscription" | "subscription_event";
+	status: string;
 	amount: number;
 	original_amount: number;
 	original_currency: string;

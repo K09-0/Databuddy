@@ -5,23 +5,27 @@ import { EmptyState } from "@/components/empty-state";
 import type { Goal } from "@/hooks/use-goals";
 import { GoalItem } from "./goal-item";
 
+type GoalAnalyticsRecord = Record<
+	string,
+	| {
+			total_users_entered: number;
+			total_users_completed: number;
+			overall_conversion_rate: number;
+	  }
+	| { error: string }
+>;
+
 interface GoalsListProps {
 	goals: Goal[];
 	isLoading: boolean;
 	onEditGoal: (goal: Goal) => void;
 	onDeleteGoal: (goalId: string) => void;
 	onCreateGoal: () => void;
-	goalAnalytics?: Record<
-		string,
-		| {
-				total_users_entered: number;
-				total_users_completed: number;
-				overall_conversion_rate: number;
-		  }
-		| { error: string }
-	>;
+	goalAnalytics?: GoalAnalyticsRecord;
 	analyticsLoading?: boolean;
 }
+
+const EMPTY_GOAL_ANALYTICS: GoalAnalyticsRecord = {};
 
 export function GoalsList({
 	goals,
@@ -29,7 +33,7 @@ export function GoalsList({
 	onEditGoal,
 	onDeleteGoal,
 	onCreateGoal,
-	goalAnalytics = {},
+	goalAnalytics = EMPTY_GOAL_ANALYTICS,
 	analyticsLoading = false,
 }: GoalsListProps) {
 	if (isLoading) {

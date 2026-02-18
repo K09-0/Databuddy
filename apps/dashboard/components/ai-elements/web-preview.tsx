@@ -133,12 +133,13 @@ export const WebPreviewUrl = ({
 	...props
 }: WebPreviewUrlProps) => {
 	const { url, setUrl } = useWebPreview();
+	const [prevUrl, setPrevUrl] = useState(url);
 	const [inputValue, setInputValue] = useState(url);
 
-	// Sync input value with context URL when it changes externally
-	useEffect(() => {
+	if (prevUrl !== url) {
+		setPrevUrl(url);
 		setInputValue(url);
-	}, [url]);
+	}
 
 	const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setInputValue(event.target.value);
@@ -191,17 +192,21 @@ export const WebPreviewBody = ({
 	);
 };
 
-export type WebPreviewConsoleProps = ComponentProps<"div"> & {
-	logs?: Array<{
-		level: "log" | "warn" | "error";
-		message: string;
-		timestamp: Date;
-	}>;
+type ConsoleLog = {
+	level: "log" | "warn" | "error";
+	message: string;
+	timestamp: Date;
 };
+
+export type WebPreviewConsoleProps = ComponentProps<"div"> & {
+	logs?: ConsoleLog[];
+};
+
+const EMPTY_LOGS: ConsoleLog[] = [];
 
 export const WebPreviewConsole = ({
 	className,
-	logs = [],
+	logs = EMPTY_LOGS,
 	children,
 	...props
 }: WebPreviewConsoleProps) => {

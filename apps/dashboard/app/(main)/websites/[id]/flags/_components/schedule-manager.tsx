@@ -99,9 +99,11 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 			form.setValue("schedule.flagId", flagId);
 		}
 		if (type === "update_rollout" && rolloutSteps.length === 0) {
+			const oneHourFromNow = new Date();
+			oneHourFromNow.setHours(oneHourFromNow.getHours() + 1);
 			form.setValue("schedule.rolloutSteps", [
 				{
-					scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+					scheduledAt: oneHourFromNow.toISOString(),
 					value: 25,
 				},
 			]);
@@ -116,7 +118,11 @@ export function ScheduleManager({ form, flagId }: ScheduleManagerProps) {
 		const lastStep = rolloutSteps.at(-1);
 		const nextDate = lastStep
 			? new Date(new Date(lastStep.scheduledAt).getTime() + 24 * 60 * 60 * 1000)
-			: new Date(Date.now() + 60 * 60 * 1000);
+			: (() => {
+					const d = new Date();
+					d.setHours(d.getHours() + 1);
+					return d;
+				})();
 		const nextValue = lastStep
 			? Math.min(Number(lastStep.value) + 25, 100)
 			: 25;

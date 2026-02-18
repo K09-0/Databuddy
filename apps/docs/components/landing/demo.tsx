@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowsOutSimpleIcon } from "@phosphor-icons/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 
 type FullscreenElement = HTMLIFrameElement & {
 	webkitRequestFullscreen?: () => Promise<void>;
@@ -9,26 +9,8 @@ type FullscreenElement = HTMLIFrameElement & {
 	msRequestFullscreen?: () => Promise<void>;
 };
 
-function isFullscreenSupported(): boolean {
-	if (typeof document === "undefined") {
-		return false;
-	}
-	const element = document.createElement("div") as FullscreenElement;
-	return !!(
-		element.requestFullscreen ||
-		element.webkitRequestFullscreen ||
-		element.mozRequestFullScreen ||
-		element.msRequestFullscreen
-	);
-}
-
 export default function DemoContainer() {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
-	const [isFullscreenAvailable, setIsFullscreenAvailable] = useState(false);
-
-	useEffect(() => {
-		setIsFullscreenAvailable(isFullscreenSupported());
-	}, []);
 
 	const handleFullscreen = async () => {
 		const element = iframeRef.current as FullscreenElement | null;
@@ -52,13 +34,6 @@ export default function DemoContainer() {
 		} catch (error) {
 			// Fullscreen was denied or failed, fallback to new tab
 			console.error("Fullscreen failed:", error);
-			window.open(element.src, "_blank", "noopener,noreferrer");
-		}
-	};
-
-	const handleOpenInNewTab = () => {
-		const element = iframeRef.current;
-		if (element) {
 			window.open(element.src, "_blank", "noopener,noreferrer");
 		}
 	};
@@ -132,15 +107,9 @@ export default function DemoContainer() {
 
 				{/* Fullscreen/Open Button & Overlay */}
 				<button
-					aria-label={
-						isFullscreenAvailable
-							? "Open demo in fullscreen"
-							: "Open demo in new tab"
-					}
+					aria-label="Open demo in fullscreen"
 					className="absolute inset-2 flex items-center justify-center rounded bg-background/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-					onClick={
-						isFullscreenAvailable ? handleFullscreen : handleOpenInNewTab
-					}
+					onClick={handleFullscreen}
 					type="button"
 				>
 					<div className="flex cursor-pointer items-center gap-2 rounded border border-border bg-card/90 px-4 py-2 font-medium text-sm shadow-lg backdrop-blur-sm duration-300 hover:bg-background/10">
@@ -148,11 +117,7 @@ export default function DemoContainer() {
 							className="size-4 text-foreground"
 							weight="fill"
 						/>
-						<span className="text-foreground">
-							{isFullscreenAvailable
-								? "Click to view fullscreen"
-								: "Click to open in new tab"}
-						</span>
+						<span className="text-foreground">Click to view fullscreen</span>
 					</div>
 				</button>
 			</div>

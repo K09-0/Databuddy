@@ -63,7 +63,7 @@ const renderActiveShape = (props: ActiveShapeProps) => {
 				startAngle={startAngle}
 				style={{
 					filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))",
-					transition: "all 150ms ease-out",
+					transition: "transform 150ms ease-out, opacity 150ms ease-out",
 				}}
 			/>
 		</g>

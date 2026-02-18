@@ -168,7 +168,13 @@ export default function EventsStreamPage() {
 		"search",
 		parseAsString.withDefault("")
 	);
+	const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
 	const [searchInput, setSearchInput] = useState(searchQuery);
+
+	if (prevSearchQuery !== searchQuery) {
+		setPrevSearchQuery(searchQuery);
+		setSearchInput(searchQuery);
+	}
 
 	const debouncedSetSearchQuery = useDebouncedCallback(
 		(value: string) => {
@@ -184,10 +190,6 @@ export default function EventsStreamPage() {
 		},
 		[debouncedSetSearchQuery]
 	);
-
-	useEffect(() => {
-		setSearchInput(searchQuery);
-	}, [searchQuery]);
 	const [selectedEventType, setSelectedEventType] = useQueryState(
 		"event",
 		parseAsString.withDefault("all")

@@ -19,6 +19,7 @@ import {
 	buildBatchQueryRequests,
 	CLICKHOUSE_SCHEMA_DOCS,
 	getQueryTypeDescriptions,
+	getQueryTypeDetails,
 	getSchemaSummary,
 	MCP_DATE_PRESETS,
 	type McpQueryItem,
@@ -134,7 +135,9 @@ function coerceQueriesArray(val: unknown): unknown[] | undefined {
 }
 
 interface GetDataArgs {
-	websiteId: string;
+	websiteId?: string;
+	websiteName?: string;
+	websiteDomain?: string;
 	type?: string;
 	preset?: (typeof MCP_DATE_PRESETS)[number];
 	from?: string;
@@ -152,6 +155,49 @@ interface GetDataArgs {
 	groupBy?: string[];
 	orderBy?: string;
 	queries?: McpQueryItem[];
+}
+
+const PROTOCOL_RE = /^https?:\/\//;
+
+async function resolveWebsiteId(
+	args: Pick<GetDataArgs, "websiteId" | "websiteName" | "websiteDomain">,
+	ctx: McpToolContext
+): Promise<string | Error> {
+	if (args.websiteId) {
+		return args.websiteId;
+	}
+
+	const authCtx = {
+		user: ctx.userId ? { id: ctx.userId } : null,
+		apiKey: ctx.apiKey,
+	};
+	const list = await getAccessibleWebsites(authCtx);
+
+	if (args.websiteDomain) {
+		const domain = args.websiteDomain.toLowerCase().replace(PROTOCOL_RE, "");
+		const match = list.find((w) => w.domain?.toLowerCase() === domain);
+		if (match) {
+			return match.id;
+		}
+		return new Error(
+			`No accessible website found with domain "${args.websiteDomain}"`
+		);
+	}
+
+	if (args.websiteName) {
+		const name = args.websiteName.toLowerCase();
+		const match = list.find((w) => w.name?.toLowerCase() === name);
+		if (match) {
+			return match.id;
+		}
+		return new Error(
+			`No accessible website found with name "${args.websiteName}"`
+		);
+	}
+
+	return new Error(
+		"One of websiteId, websiteName, or websiteDomain is required"
+	);
 }
 
 function toMcpResult(data: unknown, isError = false): CallToolResult {
@@ -269,10 +315,25 @@ export function createMcpTools(ctx: McpToolContext) {
 		},
 		get_data: {
 			description:
-				"Run analytics query(ies). Single: type + preset or from/to. Batch: queries array (2-10). Defaults to last_7d. Supports filters, groupBy, orderBy.",
+				"Run analytics query(ies). Single: type + preset or from/to. Batch: queries array (2-10). Defaults to last_7d. Supports filters, groupBy, orderBy. Accepts websiteId, websiteName, or websiteDomain to identify the website.",
 			inputSchema: z.union([
 				z.object({
-					websiteId: z.string().describe("Website ID from list_websites"),
+					websiteId: z
+						.string()
+						.optional()
+						.describe("Website ID from list_websites"),
+					websiteName: z
+						.string()
+						.optional()
+						.describe(
+							"Website name (e.g. 'Landing Page'). Alternative to websiteId."
+						),
+					websiteDomain: z
+						.string()
+						.optional()
+						.describe(
+							"Website domain (e.g. 'databuddy.cc'). Alternative to websiteId."
+						),
 					queries: z.preprocess(
 						coerceQueriesArray,
 						z.array(QueryItemSchema).min(2).max(10)
@@ -280,7 +341,22 @@ export function createMcpTools(ctx: McpToolContext) {
 					timezone: z.string().optional().default("UTC"),
 				}),
 				z.object({
-					websiteId: z.string().describe("Website ID from list_websites"),
+					websiteId: z
+						.string()
+						.optional()
+						.describe("Website ID from list_websites"),
+					websiteName: z
+						.string()
+						.optional()
+						.describe(
+							"Website name (e.g. 'Landing Page'). Alternative to websiteId."
+						),
+					websiteDomain: z
+						.string()
+						.optional()
+						.describe(
+							"Website domain (e.g. 'databuddy.cc'). Alternative to websiteId."
+						),
 					type: z.string().describe("Query type for single-query mode"),
 					preset: z.enum(MCP_DATE_PRESETS as [string, ...string[]]).optional(),
 					from: z.string().optional(),
@@ -294,8 +370,14 @@ export function createMcpTools(ctx: McpToolContext) {
 				}),
 			]),
 			handler: async (args: GetDataArgs) => {
+				const resolvedId = await resolveWebsiteId(args, ctx);
+				if (resolvedId instanceof Error) {
+					trackToolCompletion(ctx, "get_data", false);
+					return toMcpResult({ error: resolvedId.message }, true);
+				}
+
 				const access = await ensureWebsiteAccess(
-					args.websiteId,
+					resolvedId,
 					ctx.requestHeaders,
 					ctx.apiKey
 				);
@@ -331,7 +413,7 @@ export function createMcpTools(ctx: McpToolContext) {
 
 				const buildResult = buildBatchQueryRequests(
 					items,
-					args.websiteId,
+					resolvedId,
 					timezone
 				);
 				if ("error" in buildResult) {
@@ -343,7 +425,7 @@ export function createMcpTools(ctx: McpToolContext) {
 
 				try {
 					const websiteDomain =
-						(await getWebsiteDomain(args.websiteId)) ?? "unknown";
+						(await getWebsiteDomain(resolvedId)) ?? "unknown";
 					const results = await executeBatch(requests, {
 						websiteDomain,
 						timezone,
@@ -386,13 +468,24 @@ export function createMcpTools(ctx: McpToolContext) {
 		},
 		capabilities: {
 			description:
-				"Query types with descriptions, date presets, schema summary, and hints.",
-			inputSchema: z.object({}),
-			handler: () => {
+				"Query types with descriptions, allowed filters, date presets, schema summary, and usage hints. Use this to discover what queries are available and what filters each accepts.",
+			inputSchema: z.object({
+				detail: z
+					.enum(["summary", "full"])
+					.optional()
+					.default("summary")
+					.describe(
+						"'summary' returns type descriptions only; 'full' includes allowedFilters per type"
+					),
+			}),
+			handler: (args: { detail?: string }) => {
 				trackToolCompletion(ctx, "capabilities", true);
-				const queryTypeDescriptions = getQueryTypeDescriptions();
+				const useFull = args.detail === "full";
+				const queryTypes = useFull
+					? getQueryTypeDetails()
+					: getQueryTypeDescriptions();
 				return toMcpResult({
-					queryTypes: queryTypeDescriptions,
+					queryTypes,
 					schemaSummary: getSchemaSummary(),
 					datePresets: MCP_DATE_PRESETS,
 					dateFormat: "YYYY-MM-DD",
@@ -405,12 +498,17 @@ export function createMcpTools(ctx: McpToolContext) {
 						"capabilities",
 					],
 					hints: [
-						"list_websites first, then get_data",
+						"get_data accepts websiteId, websiteName, or websiteDomain — no need to call list_websites first if you know the name or domain",
+						"list_websites returns ids, names, and domains — use it when you need to discover available websites",
 						"get_data batch: pass queries array (2-10 items, each with type + preset or from/to)",
 						"get_data single: pass type + preset (e.g. last_30d) OR type + from + to (YYYY-MM-DD)",
 						"get_data defaults to last_7d when preset/from/to omitted",
-						"get_schema returns full ClickHouse schema for custom SQL",
-						"ask returns conversationId - pass it for follow-up questions",
+						"get_schema returns full ClickHouse schema — only needed for custom SQL, not for query builders",
+						"capabilities with detail='full' shows allowedFilters per query type",
+						"ask returns conversationId — pass it for follow-up questions",
+						"Custom events: use custom_events_discovery to get events + properties + top values in one call",
+						"Custom events: use filters [{field:'event_name',op:'eq',value:'your-event'}] to scope property queries to a specific event",
+						"Custom events: use filters [{field:'property_key',op:'eq',value:'your-key'}] to scope property_top_values/distribution to a specific property",
 					],
 				});
 			},

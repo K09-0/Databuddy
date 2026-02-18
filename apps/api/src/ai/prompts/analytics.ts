@@ -69,6 +69,13 @@ const ANALYTICS_RULES = `<agent-specific-rules>
 - After calling list_links, display results using the links-list JSON component
 - Do NOT use execute_query_builder for links - use list_links directly
 
+**Custom Events:**
+- Use custom_events_discovery to get all events with their property keys and top 5 values in a SINGLE call — preferred over calling custom_events, custom_event_properties, and custom_events_property_top_values separately.
+- When analyzing a specific event, use filters: [{field:"event_name", op:"eq", value:"event-name"}]
+- When analyzing a specific property, use filters: [{field:"property_key", op:"eq", value:"property-name"}] on custom_events_property_top_values or custom_events_property_distribution
+- Property values are always plain strings (quotes trimmed) across all custom event queries
+- Available query types: custom_events (list events), custom_event_properties (keys+values), custom_events_by_path (events per page), custom_events_trends (time series), custom_events_summary (totals), custom_events_property_cardinality (unique value counts), custom_events_recent (latest events), custom_events_property_classification (type inference), custom_events_property_top_values (top N values), custom_events_property_distribution (low-cardinality distributions), custom_events_discovery (all-in-one)
+
 **Insights & Recommendations:**
 - Provide 2-3 actionable recommendations based on findings
 - Explain the "why" behind patterns: "Traffic dropped 25% because..."

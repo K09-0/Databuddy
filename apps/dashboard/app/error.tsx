@@ -8,6 +8,7 @@ import {
 	WarningCircleIcon,
 } from "@phosphor-icons/react";
 import { Command as CommandPrimitive } from "cmdk";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -177,10 +178,10 @@ export default function GlobalError({
 							className={canGoBack ? "flex-1" : "w-full"}
 							variant="outline"
 						>
-							<a href="/">
+							<Link href="/">
 								<HouseIcon className="mr-2 size-4" weight="duotone" />
 								Home
-							</a>
+							</Link>
 						</Button>
 					</div>
 

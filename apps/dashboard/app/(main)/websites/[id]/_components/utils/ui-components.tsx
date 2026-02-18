@@ -104,11 +104,13 @@ interface MetricTogglesProps {
 	labels?: Record<string, string>;
 }
 
+const EMPTY_LABELS: Record<string, string> = {};
+
 export const MetricToggles: React.FC<MetricTogglesProps> = ({
 	metrics,
 	onToggle,
 	colors,
-	labels = {},
+	labels = EMPTY_LABELS,
 }) => (
 	<div className="flex flex-wrap items-center gap-2">
 		{Object.keys(metrics).map((metric) => (

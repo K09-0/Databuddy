@@ -6,13 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 
 const DOT_NOTATION_REGEX = /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$/;
+const EMPTY_PATHS: string[] = [];
 
 interface FieldPathInputProps {
 	value: string[];
 	onChange: (value: string[]) => void;
 }
 
-export function FieldPathInput({ value = [], onChange }: FieldPathInputProps) {
+export function FieldPathInput({ value = EMPTY_PATHS, onChange }: FieldPathInputProps) {
 	const [inputValue, setInputValue] = useState("");
 	const [error, setError] = useState<string | null>(null);
 

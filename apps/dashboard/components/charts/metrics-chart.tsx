@@ -274,6 +274,8 @@ function useDynamicDasharray({
 	return [DasharrayCalculator, lineDasharrays];
 }
 
+const EMPTY_ANNOTATIONS: Annotation[] = [];
+
 interface MetricsChartProps {
 	data: ChartDataRow[] | undefined;
 	isLoading: boolean;
@@ -320,7 +322,7 @@ export function MetricsChart({
 	showLegend = true,
 	onRangeSelect,
 	onCreateAnnotation,
-	annotations = [],
+	annotations = EMPTY_ANNOTATIONS,
 	onEditAnnotation,
 	onDeleteAnnotation,
 	showAnnotations = true,

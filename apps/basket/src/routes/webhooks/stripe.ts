@@ -39,11 +39,52 @@ interface WebhookCharge {
 	};
 }
 
+interface WebhookInvoice {
+	id: string;
+	subscription?: string | null;
+	customer?: string | { id: string } | null;
+	payment_intent?: string | null;
+	amount_paid: number;
+	currency: string;
+	status?: string;
+	created: number;
+	metadata?: Record<string, string>;
+	billing_reason?: string | null;
+	description?: string | null;
+}
+
+interface WebhookSubscription {
+	id: string;
+	customer?: string | { id: string } | null;
+	status: string;
+	cancel_at_period_end?: boolean;
+	canceled_at?: number | null;
+	current_period_start?: number;
+	current_period_end?: number;
+	currency?: string;
+	created: number;
+	metadata?: Record<string, string>;
+	items?: {
+		data: Array<{
+			price?: {
+				unit_amount?: number | null;
+				currency?: string;
+				recurring?: { interval?: string } | null;
+			};
+			plan?: { product?: string };
+		}>;
+	};
+}
+
 interface WebhookEvent {
 	id: string;
 	type: string;
 	data: {
-		object: WebhookPaymentIntent | WebhookCharge;
+		object:
+			| WebhookPaymentIntent
+			| WebhookCharge
+			| WebhookInvoice
+			| WebhookSubscription;
 	};
 }
 
@@ -217,6 +258,8 @@ async function handleFailedPayment(
 	const amount = (pi.amount_received ?? pi.amount) / 100;
 	const currency = pi.currency.toUpperCase();
 
+	const type: "sale" | "subscription" = pi.invoice ? "subscription" : "sale";
+
 	await clickHouse.insert({
 		table: "analytics.revenue",
 		values: [
@@ -225,7 +268,7 @@ async function handleFailedPayment(
 				website_id: metadata.client_id || config.websiteId || undefined,
 				transaction_id: pi.id,
 				provider: "stripe",
-				type: "sale",
+				type,
 				status,
 				amount,
 				original_amount: amount,
@@ -246,6 +289,168 @@ async function handleFailedPayment(
 	logger.info(
 		{ status, amount, currency, customerId },
 		`Revenue: payment ${status}`
+	);
+}
+
+async function handleInvoicePaid(
+	invoice: WebhookInvoice,
+	config: WebhookConfig
+): Promise<void> {
+	if (invoice.payment_intent) {
+		logger.debug(
+			{ invoiceId: invoice.id },
+			"Skipping invoice.paid with payment_intent (handled by payment_intent.succeeded)"
+		);
+		return;
+	}
+
+	const metadata = extractAnalyticsMetadata(invoice.metadata);
+	const customerId = extractCustomerId(invoice.customer);
+	const amount = invoice.amount_paid / 100;
+	const currency = invoice.currency.toUpperCase();
+
+	await clickHouse.insert({
+		table: "analytics.revenue",
+		values: [
+			{
+				owner_id: config.ownerId,
+				website_id: metadata.client_id || config.websiteId || undefined,
+				transaction_id: invoice.id,
+				provider: "stripe",
+				type: "subscription" as const,
+				status: "completed",
+				amount,
+				original_amount: amount,
+				original_currency: currency,
+				currency,
+				anonymous_id: metadata.anonymous_id || undefined,
+				session_id: metadata.session_id || undefined,
+				customer_id: customerId,
+				product_name: invoice.description || undefined,
+				metadata: JSON.stringify(metadata),
+				created: formatDate(new Date(invoice.created * 1000)),
+				synced_at: formatDate(new Date()),
+			},
+		],
+		format: "JSONEachRow",
+	});
+
+	logger.info(
+		{ amount, currency, customerId, billingReason: invoice.billing_reason },
+		"Revenue: invoice paid (no payment_intent)"
+	);
+}
+
+async function handleInvoiceFailed(
+	invoice: WebhookInvoice,
+	config: WebhookConfig
+): Promise<void> {
+	const metadata = extractAnalyticsMetadata(invoice.metadata);
+	const customerId = extractCustomerId(invoice.customer);
+	const amount = invoice.amount_paid / 100;
+	const currency = invoice.currency.toUpperCase();
+
+	await clickHouse.insert({
+		table: "analytics.revenue",
+		values: [
+			{
+				owner_id: config.ownerId,
+				website_id: metadata.client_id || config.websiteId || undefined,
+				transaction_id: invoice.id,
+				provider: "stripe",
+				type: "subscription" as const,
+				status: "failed",
+				amount,
+				original_amount: amount,
+				original_currency: currency,
+				currency,
+				anonymous_id: metadata.anonymous_id || undefined,
+				session_id: metadata.session_id || undefined,
+				customer_id: customerId,
+				product_name: invoice.description || undefined,
+				metadata: JSON.stringify(metadata),
+				created: formatDate(new Date(invoice.created * 1000)),
+				synced_at: formatDate(new Date()),
+			},
+		],
+		format: "JSONEachRow",
+	});
+
+	logger.info(
+		{
+			amount,
+			currency,
+			customerId,
+			billingReason: invoice.billing_reason,
+			subscriptionId: invoice.subscription,
+		},
+		"Revenue: invoice payment failed"
+	);
+}
+
+async function handleSubscriptionEvent(
+	sub: WebhookSubscription,
+	config: WebhookConfig,
+	eventType: string
+): Promise<void> {
+	const metadata = extractAnalyticsMetadata(sub.metadata);
+	const customerId = extractCustomerId(sub.customer);
+	const firstItem = sub.items?.data?.[0];
+	const amount = (firstItem?.price?.unit_amount ?? 0) / 100;
+	const currency = (
+		firstItem?.price?.currency ||
+		sub.currency ||
+		"USD"
+	).toUpperCase();
+	const interval = firstItem?.price?.recurring?.interval;
+
+	const subscriptionMetadata = {
+		...metadata,
+		subscription_status: sub.status,
+		event_type: eventType,
+		cancel_at_period_end: sub.cancel_at_period_end ? "true" : "false",
+		...(interval ? { billing_interval: interval } : {}),
+		...(sub.current_period_end
+			? { period_end: String(sub.current_period_end) }
+			: {}),
+	};
+
+	await clickHouse.insert({
+		table: "analytics.revenue",
+		values: [
+			{
+				owner_id: config.ownerId,
+				website_id: metadata.client_id || config.websiteId || undefined,
+				transaction_id: `${sub.id}_${eventType}`,
+				provider: "stripe",
+				type: "subscription_event",
+				status: sub.status,
+				amount: 0,
+				original_amount: amount,
+				original_currency: currency,
+				currency,
+				anonymous_id: metadata.anonymous_id || undefined,
+				session_id: metadata.session_id || undefined,
+				customer_id: customerId,
+				product_name: firstItem?.plan?.product || undefined,
+				metadata: JSON.stringify(subscriptionMetadata),
+				created: formatDate(new Date(sub.created * 1000)),
+				synced_at: formatDate(new Date()),
+			},
+		],
+		format: "JSONEachRow",
+	});
+
+	logger.info(
+		{
+			subscriptionId: sub.id,
+			status: sub.status,
+			eventType,
+			amount,
+			currency,
+			customerId,
+		},
+		`Revenue: subscription ${eventType}`
 	);
 }
 
@@ -354,6 +559,30 @@ export const stripeWebhook = new Elysia().post(
 						event.data.object as WebhookPaymentIntent,
 						result,
 						"canceled"
+					);
+					break;
+				}
+				case "invoice.paid": {
+					await handleInvoicePaid(event.data.object as WebhookInvoice, result);
+					break;
+				}
+				case "invoice.payment_failed": {
+					await handleInvoiceFailed(
+						event.data.object as WebhookInvoice,
+						result
+					);
+					break;
+				}
+				case "customer.subscription.created":
+				case "customer.subscription.updated":
+				case "customer.subscription.deleted":
+				case "customer.subscription.paused":
+				case "customer.subscription.resumed": {
+					const subEventType = event.type.replace("customer.subscription.", "");
+					await handleSubscriptionEvent(
+						event.data.object as WebhookSubscription,
+						result,
+						subEventType
 					);
 					break;
 				}

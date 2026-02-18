@@ -3,7 +3,7 @@
 import { ArrowsOutSimpleIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { SciFiButton } from "./scifi-btn";
 import { Spotlight } from "./spotlight";
 
@@ -50,35 +50,21 @@ type FullscreenElement = HTMLIFrameElement & {
 	msRequestFullscreen?: () => Promise<void>;
 };
 
-function isFullscreenSupported(): boolean {
-	if (typeof document === "undefined") {
-		return false;
+function getBaseUrl() {
+	if (
+		typeof window !== "undefined" &&
+		window.location.hostname === "localhost"
+	) {
+		return DEV_BASE_URL;
 	}
-	const element = document.createElement("div") as FullscreenElement;
-	return !!(
-		element.requestFullscreen ||
-		element.webkitRequestFullscreen ||
-		element.mozRequestFullScreen ||
-		element.msRequestFullscreen
-	);
+	return PROD_BASE_URL;
 }
 
 export default function Hero() {
 	const [activeTab, setActiveTab] = useState(tabs[0].id);
-	const [isFullscreenAvailable, setIsFullscreenAvailable] = useState(false);
-	const [baseUrl, setBaseUrl] = useState(PROD_BASE_URL);
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 
-	useEffect(() => {
-		setIsFullscreenAvailable(isFullscreenSupported());
-		if (
-			typeof window !== "undefined" &&
-			window.location.hostname === "localhost"
-		) {
-			setBaseUrl(DEV_BASE_URL);
-		}
-	}, []);
-
+	const baseUrl = getBaseUrl();
 	const activeTabData = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 	const iframeSrc = `${baseUrl}${activeTabData.path}?embed=true`;
 
@@ -101,13 +87,6 @@ export default function Hero() {
 				window.open(element.src, "_blank", "noopener,noreferrer");
 			}
 		} catch {
-			window.open(element.src, "_blank", "noopener,noreferrer");
-		}
-	};
-
-	const handleOpenInNewTab = () => {
-		const element = iframeRef.current;
-		if (element) {
 			window.open(element.src, "_blank", "noopener,noreferrer");
 		}
 	};
@@ -209,24 +188,14 @@ export default function Hero() {
 
 						{/* Fullscreen Button Overlay */}
 						<button
-							aria-label={
-								isFullscreenAvailable
-									? "Open demo in fullscreen"
-									: "Open demo in new tab"
-							}
+							aria-label="Open demo in fullscreen"
 							className="absolute inset-1.5 flex items-center justify-center rounded bg-background/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:inset-2"
-							onClick={
-								isFullscreenAvailable ? handleFullscreen : handleOpenInNewTab
-							}
+							onClick={handleFullscreen}
 							type="button"
 						>
 							<div className="flex cursor-pointer items-center gap-2 rounded border border-border bg-card/90 px-4 py-2 font-medium text-sm shadow-lg backdrop-blur-sm transition-colors duration-200 hover:bg-card">
 								<ArrowsOutSimpleIcon className="size-4" weight="fill" />
-								<span>
-									{isFullscreenAvailable
-										? "Click to view fullscreen"
-										: "Click to open in new tab"}
-								</span>
+								<span>Click to view fullscreen</span>
 							</div>
 						</button>
 					</div>

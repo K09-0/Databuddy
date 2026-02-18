@@ -12,6 +12,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
+import { useId } from "react";
 import { Card } from "@/components/ui/card";
 import type { ChartComponentProps } from "../../types";
 
@@ -46,7 +47,7 @@ export function TimeSeriesRenderer({
 	series,
 	className,
 }: TimeSeriesProps) {
-	const id = `ai-chart-${Math.random().toString(36).slice(2, 9)}`;
+	const id = useId();
 	const getColor = (idx: number) => COLORS[idx % COLORS.length];
 
 	const tooltipContent = ({
