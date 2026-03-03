@@ -1,6 +1,7 @@
 import { CheckIcon } from "@phosphor-icons/react/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
+import Script from "next/script";
 import { Footer } from "@/components/footer";
 import { SciFiButton } from "@/components/landing/scifi-btn";
 import Section from "@/components/landing/section";
@@ -14,12 +15,21 @@ export const metadata: Metadata = {
 	alternates: {
 		canonical: "https://www.databuddy.cc/contact/thanks",
 	},
-	robots: { index: false, follow: true },
+	robots: { index: false, follow: false },
 };
 
 export default function ContactThanksPage() {
 	return (
 		<div className="overflow-hidden">
+			{process.env.NODE_ENV === "production" && (
+				<Script
+					dangerouslySetInnerHTML={{
+						__html: `gtag('event', 'conversion', {'send_to': 'AW-17988229504/oDMpCP7Gh4IcEICzuoFD'});`,
+					}}
+					id="gtag-conversion-lead-form"
+					strategy="afterInteractive"
+				/>
+			)}
 			<StructuredData
 				page={{
 					title: "Thanks for Reaching Out | Databuddy",
