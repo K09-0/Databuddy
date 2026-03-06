@@ -2505,6 +2505,7 @@ export const referrers: Record<string, { type: string; name: string }> = {
 	"247realmedia.com": { type: "paid", name: "AppNexus" },
 	"lijit.com": { type: "paid", name: "Sovrn" },
 	"www.googleadservices.com": { type: "paid", name: "Google AdServices" },
+	"syndicatedsearch.goog": { type: "paid", name: "Google AdServices" },
 	"partner.googleadservices.com": { type: "paid", name: "Google AdServices" },
 	"googleads.g.doubleclick.net": { type: "paid", name: "Google Ads" },
 	"tpc.googlesyndication.com": { type: "paid", name: "Google Syndication" },
