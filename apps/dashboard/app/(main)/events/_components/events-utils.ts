@@ -1,8 +1,6 @@
 import dayjs from "dayjs";
 
-export function formatCompactNumber(
-	value: number | null | undefined
-): string {
+export function formatCompactNumber(value: number | null | undefined): string {
 	if (value === null || value === undefined || Number.isNaN(value)) {
 		return "0";
 	}
@@ -32,8 +30,7 @@ export function generateDateRange(
 	let current = dayjs(startDate);
 	const end = dayjs(endDate);
 	const unit = granularity === "hourly" ? "hour" : "day";
-	const fmt =
-		granularity === "hourly" ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
+	const fmt = granularity === "hourly" ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
 
 	while (current.isBefore(end) || current.isSame(end, "day")) {
 		dates.push(current.format(fmt));

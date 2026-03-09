@@ -106,10 +106,7 @@ export function SummaryView({
 			{activeEvent && activeEvent.summaryProperties.length > 0 && (
 				<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
 					{activeEvent.summaryProperties.map((prop) => (
-						<PropertyCard
-							key={prop.key}
-							property={prop}
-						/>
+						<PropertyCard key={prop.key} property={prop} />
 					))}
 				</div>
 			)}
@@ -186,9 +183,9 @@ function PropertyCard({ property }: PropertyCardProps) {
 									<span className="w-10 text-right text-muted-foreground/60 text-xs tabular-nums">
 										{safePercentage.toFixed(0)}%
 									</span>
+								</div>
 							</div>
 						</div>
-					</div>
 					);
 				})}
 
