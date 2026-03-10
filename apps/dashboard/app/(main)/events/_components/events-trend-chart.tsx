@@ -440,13 +440,7 @@ export function EventsTrendChart({
 							onMouseUp={handleMouseUp}
 						>
 							<defs>
-								<linearGradient
-									id="colorEvents"
-									x1="0"
-									x2="0"
-									y1="0"
-									y2="1"
-								>
+								<linearGradient id="colorEvents" x1="0" x2="0" y1="0" y2="1">
 									<stop
 										offset="5%"
 										stopColor={EVENTS_COLOR}
@@ -458,18 +452,8 @@ export function EventsTrendChart({
 										stopOpacity={0.05}
 									/>
 								</linearGradient>
-								<linearGradient
-									id="colorUsers"
-									x1="0"
-									x2="0"
-									y1="0"
-									y2="1"
-								>
-									<stop
-										offset="5%"
-										stopColor={USERS_COLOR}
-										stopOpacity={0.3}
-									/>
+								<linearGradient id="colorUsers" x1="0" x2="0" y1="0" y2="1">
+									<stop offset="5%" stopColor={USERS_COLOR} stopOpacity={0.3} />
 									<stop
 										offset="95%"
 										stopColor={USERS_COLOR}
@@ -502,9 +486,7 @@ export function EventsTrendChart({
 									/>
 								}
 								cursor={
-									useBar
-										? { fill: "var(--accent)", opacity: 0.3 }
-										: undefined
+									useBar ? { fill: "var(--accent)", opacity: 0.3 } : undefined
 								}
 								wrapperStyle={TOOLTIP_WRAPPER}
 							/>
@@ -574,11 +556,10 @@ export function EventsTrendChart({
 										<Area
 											dataKey={name}
 											fill={color}
-											fillOpacity={0.15}
+											fillOpacity={0.1}
 											hide={hidden}
 											key={name}
 											name={name}
-											stackId="events"
 											stroke={color}
 											strokeDasharray={
 												lineDasharrays.find((l) => l.name === name)
