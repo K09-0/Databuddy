@@ -1,8 +1,18 @@
 import { auth } from "@databuddy/auth";
-import { db, eq, member, websites } from "@databuddy/db";
+import {
+	and,
+	annotations,
+	db,
+	eq,
+	gte,
+	isNull,
+	member,
+	websites,
+} from "@databuddy/db";
 import { getRedisCache } from "@databuddy/redis";
 import { logger } from "@databuddy/shared/logger";
 import { ToolLoopAgent } from "ai";
+import dayjs from "dayjs";
 import { Elysia, t } from "elysia";
 import { createAgentConfig } from "../ai/agents";
 import { gateway } from "../ai/config/models";
@@ -39,7 +49,10 @@ Rules:
 - sentiment: positive = good trend, neutral = informational, negative = needs attention
 - priority: 1-10 where 10 is most urgent
 - suggestion: a short, direct action like "Investigate the /checkout page for errors" or "Add caching to slow pages"
-- If nothing notable, return {"insights": []}`;
+- If user annotations are provided, SKIP any change that is already explained by an annotation — the user already knows about it
+- Only mention an annotated event if there's an additional unexpected angle (e.g. the spike was 5x larger than expected, or traffic didn't recover after a known outage)
+- Focus on UNEXPLAINED changes — anomalies the user hasn't annotated are the most valuable insights
+- If nothing notable or everything is explained by annotations, return {"insights": []}`;
 
 interface ParsedInsight {
 	title: string;
@@ -99,6 +112,39 @@ function parseInsights(text: string): ParsedInsight[] {
 	}
 }
 
+async function fetchRecentAnnotations(websiteId: string): Promise<string> {
+	const since = dayjs().subtract(14, "day").toDate();
+
+	const rows = await db
+		.select({
+			text: annotations.text,
+			xValue: annotations.xValue,
+			tags: annotations.tags,
+		})
+		.from(annotations)
+		.where(
+			and(
+				eq(annotations.websiteId, websiteId),
+				gte(annotations.xValue, since),
+				isNull(annotations.deletedAt)
+			)
+		)
+		.orderBy(annotations.xValue)
+		.limit(20);
+
+	if (rows.length === 0) {
+		return "";
+	}
+
+	const lines = rows.map((r) => {
+		const date = dayjs(r.xValue).format("YYYY-MM-DD");
+		const tags = r.tags?.length ? ` [${r.tags.join(", ")}]` : "";
+		return `- ${date}: ${r.text}${tags}`;
+	});
+
+	return `\n\nUser annotations (known events that may explain traffic changes):\n${lines.join("\n")}`;
+}
+
 async function analyzeWebsite(
 	websiteId: string,
 	domain: string,
@@ -128,8 +174,11 @@ async function analyzeWebsite(
 	const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
 	try {
+		const annotationContext = await fetchRecentAnnotations(websiteId);
+		const prompt = INSIGHTS_QUESTION + annotationContext;
+
 		const result = await agent.generate({
-			messages: [{ role: "user" as const, content: INSIGHTS_QUESTION }],
+			messages: [{ role: "user" as const, content: prompt }],
 			abortSignal: controller.signal,
 		});
 		return parseInsights(result.text ?? "");
