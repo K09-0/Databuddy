@@ -65,33 +65,28 @@ export const auth = betterAuth({
 		user: {
 			create: {
 				after: async (createdUser) => {
-					try {
-						const orgId = createId();
-						const orgName = getOrgNameFromUser(
-							createdUser.name,
-							createdUser.email
-						);
+					const orgId = createId();
+					const orgName = getOrgNameFromUser(
+						createdUser.name,
+						createdUser.email
+					);
 
-						await db.insert(organizationTable).values({
+					await db.transaction(async (tx) => {
+						await tx.insert(organizationTable).values({
 							id: orgId,
 							name: orgName,
 							slug: generateOrgSlug(orgName),
 							createdAt: new Date(),
 						});
 
-						await db.insert(memberTable).values({
+						await tx.insert(memberTable).values({
 							id: createId(),
 							organizationId: orgId,
 							userId: createdUser.id,
 							role: "owner",
 							createdAt: new Date(),
 						});
-					} catch (error) {
-						console.error(
-							"Failed to create default organization for user:",
-							error
-						);
-					}
+					});
 				},
 			},
 		},

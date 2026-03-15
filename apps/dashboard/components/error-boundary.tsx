@@ -18,16 +18,16 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
 	const [error, setError] = useState<Error | null>(null);
 
 	useEffect(() => {
-		const errorHandler = (error: ErrorEvent) => {
-			console.error("Error caught by boundary:", error);
-			trackError(error.error.message, {
-				stack: error.error.stack,
-				error_type: error.error.name,
-				filename: error.filename,
-				lineno: error.lineno,
-				colno: error.colno,
+		const errorHandler = (event: ErrorEvent) => {
+			const err = event.error as Error | undefined;
+			trackError(err?.message ?? event.message ?? "Unknown error", {
+				stack: err?.stack,
+				error_type: err?.name,
+				filename: event.filename,
+				lineno: event.lineno,
+				colno: event.colno,
 			});
-			setError(error.error);
+			setError(err ?? new Error(event.message || "Unknown error"));
 			setHasError(true);
 		};
 

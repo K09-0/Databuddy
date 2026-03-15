@@ -333,7 +333,7 @@ export const insights = new Elysia({ prefix: "/v1/insights" })
 					{ error, organizationId },
 					"AI insights generation failed"
 				);
-				return { success: true, insights: [], source: "fallback" };
+				return { success: false, insights: [], source: "fallback" };
 			}
 		},
 		{

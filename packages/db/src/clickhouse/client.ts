@@ -1,6 +1,7 @@
 import { createClient, type ResponseJSON } from "@clickhouse/client";
 import type { NodeClickHouseClientConfigOptions } from "@clickhouse/client/dist/config";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
+import SqlString from "sqlstring";
 /**
  * ClickHouse table names used throughout the application
  */
@@ -182,18 +183,18 @@ export function formatClickhouseDate(
 
 export function toDate(str: string, interval?: string) {
 	if (!interval || interval === "minute" || interval === "hour") {
-		if (str.match(DATE_REGEX)) {
-			return escape(str);
+		if (DATE_REGEX.test(str)) {
+			return SqlString.escape(str);
 		}
 
 		return str;
 	}
 
-	if (str.match(DATE_REGEX)) {
-		return `toDate(${escape(str.split(" ")[0])})`;
+	if (DATE_REGEX.test(str)) {
+		return `toDate(${SqlString.escape(str.split(" ")[0])})`;
 	}
 
-	return `toDate(${str})`;
+	return `toDate(${SqlString.escape(str)})`;
 }
 
 export function convertClickhouseDateToJs(date: string) {

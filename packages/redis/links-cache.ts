@@ -35,12 +35,15 @@ export async function getCachedLink(slug: string): Promise<CachedLink | null> {
 		return null;
 	}
 
-	// Handle explicit null marker (link doesn't exist)
 	if (cached === "null") {
 		return null;
 	}
 
-	return JSON.parse(cached) as CachedLink;
+	try {
+		return JSON.parse(cached) as CachedLink;
+	} catch {
+		return null;
+	}
 }
 
 /**

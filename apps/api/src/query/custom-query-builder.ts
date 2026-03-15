@@ -384,7 +384,7 @@ export async function executeCustomQuery(
 		validateQueryConfig(request.query);
 
 		const timezone = request.timezone || "UTC";
-		const limit = Math.min(request.limit || 1000, 10_000);
+		const limit = Math.max(1, Math.min(request.limit || 1000, 10_000));
 
 		// Build the SQL
 		const { sql, params } = buildSQL(

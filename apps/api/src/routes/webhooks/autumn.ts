@@ -249,8 +249,7 @@ function verifyWebhookSignature(
 	headers: Record<string, string | null>
 ): boolean {
 	if (!SVIX_WEBHOOK_SECRET) {
-		logger.warn("AUTUMN_WEBHOOK_SECRET not configured, skipping verification");
-		return true;
+		throw new Error("AUTUMN_WEBHOOK_SECRET not configured");
 	}
 
 	const svixId = headers["svix-id"];
