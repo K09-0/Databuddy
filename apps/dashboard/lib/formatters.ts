@@ -1,3 +1,5 @@
+import dayjs from "@/lib/dayjs";
+
 export const formatMetricNumber = (num: number | undefined | null): string => {
 	if (num === undefined || num === null) {
 		return "0";
@@ -44,9 +46,6 @@ export const formatNumber = (num: number | undefined | null): string => {
 
 	return new Intl.NumberFormat("en-US").format(num);
 };
-
-// Date formatting utilities
-import dayjs from "@/lib/dayjs";
 
 // Predefined date formats for consistency across the app
 export const DATE_FORMATS = {

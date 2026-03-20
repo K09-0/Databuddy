@@ -13,6 +13,7 @@ import type {
 	ChartContext,
 	CreateAnnotationData,
 } from "@/types/annotations";
+import type { ChartDataRow, MetricConfig } from "./metrics-constants";
 import { AnnotationModal } from "./annotation-modal";
 import { MetricsChart } from "./metrics-chart";
 
@@ -28,13 +29,13 @@ interface CreateAnnotationInput {
 
 interface MetricsChartWithAnnotationsProps {
 	websiteId: string;
-	data: any[] | undefined;
+	data: ChartDataRow[] | undefined;
 	isLoading: boolean;
 	height?: number;
 	title?: string;
 	description?: string;
 	className?: string;
-	metricsFilter?: (metric: any) => boolean;
+	metricsFilter?: (metric: MetricConfig) => boolean;
 	showLegend?: boolean;
 	onRangeSelect?: (dateRange: { startDate: Date; endDate: Date }) => void;
 	dateRange?: {
@@ -96,7 +97,7 @@ export function MetricsChartWithAnnotations({
 			input: {
 				websiteId,
 				chartType: "metrics" as const,
-				chartContext: chartContext as any,
+				chartContext: chartContext as ChartContext,
 			},
 		}),
 		enabled: !!websiteId && !!chartContext,
