@@ -235,6 +235,7 @@ export const billingNavigation: NavigationSection[] = [
 				badge: { text: "Experimental", variant: "purple" as const },
 			}
 		),
+		createNavItem("Feedback & Credits", SpeakerHighIcon, "/feedback"),
 	]),
 ];
 
@@ -421,6 +422,7 @@ const CATEGORY_PATH_MAP = [
 	{ pattern: "/monitors", category: "monitors" as const },
 	{ pattern: "/organizations", category: "organizations" as const },
 	{ pattern: "/billing", category: "billing" as const },
+	{ pattern: "/feedback", category: "billing" as const },
 	{ pattern: "/settings", category: "settings" as const },
 ] as const;
 

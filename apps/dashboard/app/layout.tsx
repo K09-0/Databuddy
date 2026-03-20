@@ -114,25 +114,27 @@ export default function RootLayout({
 			lang="en"
 			suppressHydrationWarning
 		>
-			<Databuddy
-				apiUrl={
-					isLocalhost ? "http://localhost:4000" : "https://basket.databuddy.cc"
-				}
-				clientId={
-					isLocalhost
-						? "5ced32e5-0219-4e75-a18a-ad9826f85698"
-						: "3ed1fce1-5a56-4cb6-a977-66864f6d18e3"
-				}
-				trackAttributes={true}
-				trackErrors={true}
-				trackPerformance={true}
-				trackWebVitals={true}
-			/>
 			<body className="flex h-full min-h-dvh flex-col bg-background text-foreground antialiased">
 				<Providers>
 					<main className="flex-1">{children}</main>
 				</Providers>
 				<Toaster />
+				<Databuddy
+					apiUrl={
+						isLocalhost
+							? "http://localhost:4000"
+							: "https://basket.databuddy.cc"
+					}
+					clientId={
+						isLocalhost
+							? "5ced32e5-0219-4e75-a18a-ad9826f85698"
+							: "3ed1fce1-5a56-4cb6-a977-66864f6d18e3"
+					}
+					trackAttributes={true}
+					trackErrors={true}
+					trackPerformance={true}
+					trackWebVitals={true}
+				/>
 			</body>
 		</html>
 	);

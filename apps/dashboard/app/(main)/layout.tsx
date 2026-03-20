@@ -1,6 +1,7 @@
 import { auth } from "@databuddy/auth";
 import { AutumnProvider } from "autumn-js/react";
 import { headers } from "next/headers";
+import { FeedbackPrompt } from "@/components/feedback-prompt";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BillingProvider } from "@/components/providers/billing-provider";
 import { CommandSearchProvider } from "@/components/ui/command-search";
@@ -34,9 +35,10 @@ export default async function MainLayout({
 							<div className="h-dvh overflow-y-auto overflow-x-hidden pt-12 md:pt-0">
 								{children}
 							</div>
-						</div>
 					</div>
-				</CommandSearchProvider>
+					<FeedbackPrompt />
+				</div>
+			</CommandSearchProvider>
 			</BillingProvider>
 		</AutumnProvider>
 	);

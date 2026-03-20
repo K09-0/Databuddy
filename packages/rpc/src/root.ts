@@ -2,6 +2,7 @@ import { annotationsRouter } from "./routers/annotations";
 import { apikeysRouter } from "./routers/apikeys";
 import { autocompleteRouter } from "./routers/autocomplete";
 import { billingRouter } from "./routers/billing";
+import { feedbackRouter } from "./routers/feedback";
 import { flagsRouter } from "./routers/flags";
 import { funnelsRouter } from "./routers/funnels";
 import { goalsRouter } from "./routers/goals";
@@ -21,6 +22,7 @@ export const appRouter = {
 	goals: goalsRouter,
 	autocomplete: autocompleteRouter,
 	apikeys: apikeysRouter,
+	feedback: feedbackRouter,
 	flags: flagsRouter,
 	targetGroups: targetGroupsRouter,
 	organizations: organizationsRouter,

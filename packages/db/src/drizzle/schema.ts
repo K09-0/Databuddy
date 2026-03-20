@@ -992,6 +992,108 @@ export const revenueConfig = pgTable(
 	]
 );
 
+export const feedbackCategory = pgEnum("feedback_category", [
+	"bug_report",
+	"feature_request",
+	"ux_improvement",
+	"performance",
+	"documentation",
+	"other",
+]);
+
+export const feedbackStatus = pgEnum("feedback_status", [
+	"pending",
+	"approved",
+	"rejected",
+]);
+
+export const feedback = pgTable(
+	"feedback",
+	{
+		id: text().primaryKey().notNull(),
+		userId: text("user_id").notNull(),
+		organizationId: text("organization_id").notNull(),
+		title: text().notNull(),
+		description: text().notNull(),
+		category: feedbackCategory().notNull(),
+		status: feedbackStatus().default("pending").notNull(),
+		creditsAwarded: integer("credits_awarded").default(0).notNull(),
+		adminNotes: text("admin_notes"),
+		reviewedBy: text("reviewed_by"),
+		reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("feedback_user_id_idx").using(
+			"btree",
+			table.userId.asc().nullsLast().op("text_ops")
+		),
+		index("feedback_organization_id_idx").using(
+			"btree",
+			table.organizationId.asc().nullsLast().op("text_ops")
+		),
+		index("feedback_status_idx").using(
+			"btree",
+			table.status.asc().nullsLast()
+		),
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "feedback_user_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.organizationId],
+			foreignColumns: [organization.id],
+			name: "feedback_organization_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.reviewedBy],
+			foreignColumns: [user.id],
+			name: "feedback_reviewed_by_fkey",
+		}).onDelete("set null"),
+	]
+);
+
+export const feedbackRedemptions = pgTable(
+	"feedback_redemptions",
+	{
+		id: text().primaryKey().notNull(),
+		userId: text("user_id").notNull(),
+		organizationId: text("organization_id").notNull(),
+		creditsSpent: integer("credits_spent").notNull(),
+		rewardType: text("reward_type").notNull(),
+		rewardAmount: integer("reward_amount").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("feedback_redemptions_user_id_idx").using(
+			"btree",
+			table.userId.asc().nullsLast().op("text_ops")
+		),
+		index("feedback_redemptions_organization_id_idx").using(
+			"btree",
+			table.organizationId.asc().nullsLast().op("text_ops")
+		),
+		foreignKey({
+			columns: [table.userId],
+			foreignColumns: [user.id],
+			name: "feedback_redemptions_user_id_fkey",
+		}).onDelete("cascade"),
+		foreignKey({
+			columns: [table.organizationId],
+			foreignColumns: [organization.id],
+			name: "feedback_redemptions_organization_id_fkey",
+		}).onDelete("cascade"),
+	]
+);
+
 export type Website = typeof websites.$inferSelect;
 export type WebsiteInsert = typeof websites.$inferInsert;
 export type Organization = typeof organization.$inferSelect;
@@ -1010,3 +1112,7 @@ export type Annotations = typeof annotations.$inferSelect;
 export type AnnotationsInsert = typeof annotations.$inferInsert;
 export type TargetGroups = typeof targetGroups.$inferSelect;
 export type TargetGroupsInsert = typeof targetGroups.$inferInsert;
+export type Feedback = typeof feedback.$inferSelect;
+export type FeedbackInsert = typeof feedback.$inferInsert;
+export type FeedbackRedemption = typeof feedbackRedemptions.$inferSelect;
+export type FeedbackRedemptionInsert = typeof feedbackRedemptions.$inferInsert;
