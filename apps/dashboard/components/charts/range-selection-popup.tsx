@@ -50,28 +50,21 @@ export function RangeSelectionPopup({
 		[onAddAnnotationAction]
 	);
 
-	useHotkeys(
-		"escape",
-		() => {
-			onCloseAction();
-		},
-		{ enabled: isOpen },
-		[onCloseAction]
-	);
+	useHotkeys("escape", () => onCloseAction(), { enabled: isOpen }, [
+		onCloseAction,
+	]);
 
 	if (!isOpen) {
 		return null;
 	}
 
 	const formatDateRange = () => {
-		const start = dateRange.startDate.toLocaleDateString("en-US", {
+		const opts: Intl.DateTimeFormatOptions = {
 			month: "short",
 			day: "numeric",
-		});
-		const end = dateRange.endDate.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-		});
+		};
+		const start = dateRange.startDate.toLocaleDateString("en-US", opts);
+		const end = dateRange.endDate.toLocaleDateString("en-US", opts);
 		return dateRange.startDate.getTime() !== dateRange.endDate.getTime()
 			? `${start} – ${end}`
 			: start;
@@ -79,45 +72,42 @@ export function RangeSelectionPopup({
 
 	return (
 		<div className="absolute inset-0 z-50 flex items-center justify-center">
-			{/* Backdrop to catch clicks */}
 			<button
 				aria-label="Close"
 				className="absolute inset-0 cursor-default bg-transparent"
 				onClick={onCloseAction}
 				type="button"
 			/>
-			<div className="relative min-w-[180px] overflow-hidden rounded border bg-popover shadow-xl">
-				<div className="border-b bg-accent px-3 py-2">
-					<p className="font-medium text-foreground text-xs">
-						{formatDateRange()}
-					</p>
+			<div className="relative min-w-[160px] overflow-hidden rounded border bg-popover shadow-xl">
+				<div className="border-b px-3 py-1.5">
+					<p className="font-medium text-foreground text-xs">{formatDateRange()}</p>
 				</div>
-				<div className="p-1">
+				<div className="p-0.5">
 					<button
-						className="flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left text-sm hover:bg-accent"
+						className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
 						onClick={handleZoom}
 						type="button"
 					>
 						<MagnifyingGlassPlusIcon
-							className="size-4 text-muted-foreground"
+							className="size-3.5 text-muted-foreground"
 							weight="duotone"
 						/>
-						<span className="flex-1 text-foreground">Zoom to range</span>
-						<kbd className="rounded border bg-accent px-1.5 py-0.5 text-[10px] text-foreground">
+						<span className="flex-1 text-foreground text-xs">Zoom to range</span>
+						<kbd className="rounded border px-1 py-px text-[10px] text-muted-foreground">
 							Z
 						</kbd>
 					</button>
 					<button
-						className="flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left text-sm hover:bg-accent"
+						className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
 						onClick={onAddAnnotationAction}
 						type="button"
 					>
 						<NoteIcon
-							className="size-4 text-muted-foreground"
+							className="size-3.5 text-muted-foreground"
 							weight="duotone"
 						/>
-						<span className="flex-1 text-foreground">Add annotation…</span>
-						<kbd className="rounded border bg-accent px-1.5 py-0.5 text-[10px] text-foreground">
+						<span className="flex-1 text-foreground text-xs">Add annotation…</span>
+						<kbd className="rounded border px-1 py-px text-[10px] text-muted-foreground">
 							A
 						</kbd>
 					</button>

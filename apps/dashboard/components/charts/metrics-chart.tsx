@@ -1,7 +1,13 @@
-import { ChartLineIcon, XIcon } from "@phosphor-icons/react";
+import {
+	ChartLineIcon,
+	EyeIcon,
+	EyeSlashIcon,
+	NoteIcon,
+	XIcon,
+} from "@phosphor-icons/react";
 import dayjs from "@/lib/dayjs";
 import { useAtom } from "jotai";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
 	Area,
 	CartesianGrid,
@@ -15,8 +21,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useChartPreferences } from "@/hooks/use-chart-preferences";
 import { usePersistentState } from "@/hooks/use-persistent-state";
 import {
@@ -149,6 +154,20 @@ interface MetricsChartProps {
 	granularity?: "hourly" | "daily" | "weekly" | "monthly";
 }
 
+function formatAxisTickLabel(
+	value: string,
+	granularity: MetricsChartProps["granularity"]
+): string {
+	const parsed = dayjs(value);
+	if (!parsed.isValid()) {
+		return value;
+	}
+	if (granularity === "hourly") {
+		return parsed.format("MMM D, h:mm A");
+	}
+	return parsed.format("MMM D, YYYY");
+}
+
 const DEFAULT_METRICS = [
 	"pageviews",
 	"sessions",
@@ -207,7 +226,16 @@ export function MetricsChart({
 		? METRICS.filter(metricsFilter)
 		: METRICS.filter((metric) => DEFAULT_METRICS.includes(metric.key));
 
-	const chartData = rawData;
+	const chartData = useMemo(
+		() =>
+			rawData.map((row) => {
+				const raw = (row as ChartDataRow & { rawDate?: string }).rawDate;
+				const xKey =
+					typeof raw === "string" && raw.length > 0 ? raw : row.date;
+				return { ...row, xKey };
+			}),
+		[rawData]
+	);
 
 	const [DasharrayCalculator, lineDasharrays] = useDynamicDasharray({
 		splitIndex: chartData.length - 2,
@@ -252,8 +280,8 @@ export function MetricsChart({
 		}
 
 		const rightBoundary = refAreaRight || refAreaLeft;
-		const leftIndex = chartData.findIndex((d) => d.date === refAreaLeft);
-		const rightIndex = chartData.findIndex((d) => d.date === rightBoundary);
+		const leftIndex = chartData.findIndex((d) => d.xKey === refAreaLeft);
+		const rightIndex = chartData.findIndex((d) => d.xKey === rightBoundary);
 
 		if (leftIndex === -1 || rightIndex === -1) {
 			setRefAreaLeft(null);
@@ -296,7 +324,7 @@ export function MetricsChart({
 	};
 
 	if (isLoading) {
-		return <SkeletonChart className="w-full" height={height} title={title} />;
+		return <SkeletonChart className={cn("w-full", className)} height={height} />;
 	}
 
 	if (!chartData.length) {
@@ -329,39 +357,6 @@ export function MetricsChart({
 		<div
 			className={cn("w-full overflow-hidden rounded border bg-card", className)}
 		>
-			{/* Annotations Panel */}
-			{annotations.length > 0 && (
-				<div className="flex items-center justify-between border-b bg-accent px-4 py-2">
-					<div className="flex items-center gap-3">
-						<span className="text-foreground text-sm">
-							{annotations.length} annotation
-							{annotations.length !== 1 ? "s" : ""} on this chart
-						</span>
-						{onToggleAnnotations !== undefined && (
-							<div className="flex items-center gap-2">
-								<Label
-									className="text-foreground text-xs"
-									htmlFor="show-annotations"
-								>
-									Show annotations
-								</Label>
-								<Switch
-									checked={showAnnotations}
-									id="show-annotations"
-									onCheckedChange={onToggleAnnotations}
-								/>
-							</div>
-						)}
-					</div>
-					<AnnotationsPanel
-						annotations={annotations}
-						granularity={granularity}
-						onDelete={onDeleteAnnotation || (async () => {})}
-						onEdit={onEditAnnotation || (() => {})}
-					/>
-				</div>
-			)}
-
 			<div className="p-0">
 				<div
 					className="relative select-none"
@@ -372,30 +367,58 @@ export function MetricsChart({
 						WebkitUserSelect: refAreaLeft ? "none" : "auto",
 					}}
 				>
-					{/* Range Selection Instructions */}
+					{/* Annotations controls — overlaid top-right */}
+					{annotations.length > 0 && (
+						<div className="absolute top-2 right-3 z-10 flex items-center gap-1">
+							{onToggleAnnotations !== undefined && (
+								<Button
+									aria-label={
+										showAnnotations
+											? "Hide annotations"
+											: "Show annotations"
+									}
+									className="size-7 text-muted-foreground hover:text-foreground"
+									onClick={() => onToggleAnnotations(!showAnnotations)}
+									size="icon"
+									variant="ghost"
+								>
+									{showAnnotations ? (
+										<EyeIcon className="size-3.5" />
+									) : (
+										<EyeSlashIcon className="size-3.5" />
+									)}
+								</Button>
+							)}
+							<AnnotationsPanel
+								annotations={annotations}
+								granularity={granularity}
+								onDelete={onDeleteAnnotation || (async () => {})}
+								onEdit={onEditAnnotation || (() => {})}
+							/>
+						</div>
+					)}
+
+					{/* Drag instruction pill */}
 					{refAreaLeft !== null && refAreaRight === null && (
-						<div className="absolute top-4 left-1/2 z-10 -translate-x-1/2 transform">
-							<div className="rounded bg-primary px-3 py-1.5 font-medium text-primary-foreground text-xs shadow-lg">
-								Drag to select range or click to annotate this point
+						<div className="absolute top-3 left-1/2 z-10 -translate-x-1/2">
+							<div className="rounded bg-foreground px-2.5 py-1 font-medium text-background text-xs shadow-lg">
+								Drag to select range
 							</div>
 						</div>
 					)}
 
+					{/* Onboarding tip */}
 					{!refAreaLeft && annotations.length === 0 && !tipDismissed && (
-						<div className="absolute top-4 right-4 z-10">
-							<div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 shadow-sm">
-								<span className="text-muted-foreground text-xs">
-									Click or drag on chart to create annotations
-								</span>
-								<button
-									aria-label="Dismiss tip"
-									className="text-muted-foreground hover:text-foreground"
-									onClick={() => setTipDismissed(true)}
-									type="button"
-								>
-									<XIcon size={12} />
-								</button>
-							</div>
+						<div className="absolute top-2 right-3 z-10">
+							<button
+								className="flex items-center gap-1.5 rounded border bg-card/90 px-2 py-1 text-muted-foreground text-xs shadow-sm backdrop-blur-sm hover:text-foreground"
+								onClick={() => setTipDismissed(true)}
+								type="button"
+							>
+								<NoteIcon className="size-3" weight="duotone" />
+								<span>Drag to annotate</span>
+								<XIcon className="size-2.5" />
+							</button>
 						</div>
 					)}
 					<ResponsiveContainer height="100%" width="100%">
@@ -442,8 +465,11 @@ export function MetricsChart({
 							/>
 							<XAxis
 								axisLine={false}
-								dataKey="date"
+								dataKey="xKey"
 								tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+								tickFormatter={(value) =>
+									formatAxisTickLabel(String(value), granularity)
+								}
 								tickLine={false}
 							/>
 							<YAxis
@@ -458,6 +484,9 @@ export function MetricsChart({
 										isDragging={isDragging}
 										justFinishedDragging={suppressTooltip}
 									/>
+								}
+								labelFormatter={(value) =>
+									formatAxisTickLabel(String(value), granularity)
 								}
 								cursor={
 									suppressTooltip
@@ -493,40 +522,56 @@ export function MetricsChart({
 										return null;
 									}
 
-									const annotationStart = dayjs(annotation.xValue).toDate();
-									const annotationEnd = annotation.xEndValue
-										? dayjs(annotation.xEndValue).toDate()
-										: annotationStart;
+									const isHourlyBucket = granularity === "hourly";
 
-									const chartStart = dayjs(
+									const rangeStart = isHourlyBucket
+										? dayjs(annotation.xValue).toDate()
+										: dayjs(annotation.xValue).startOf("day").toDate();
+									const rangeEnd = isHourlyBucket
+										? dayjs(annotation.xEndValue || annotation.xValue).toDate()
+										: dayjs(annotation.xEndValue || annotation.xValue)
+												.endOf("day")
+												.toDate();
+
+									const chartFirstD = dayjs(
 										(chartFirst as ChartDataRow & { rawDate?: string })
 											.rawDate || chartFirst.date
-									).toDate();
-									const chartEnd = dayjs(
+									);
+									const chartLastD = dayjs(
 										(chartLast as ChartDataRow & { rawDate?: string })
 											.rawDate || chartLast.date
-									).toDate();
+									);
 
-									if (
-										annotationEnd < chartStart ||
-										annotationStart > chartEnd
-									) {
+									const chartDomainStart = isHourlyBucket
+										? chartFirstD.toDate()
+										: chartFirstD.startOf("day").toDate();
+									const chartDomainEnd = isHourlyBucket
+										? chartLastD.toDate()
+										: chartLastD.endOf("day").toDate();
+
+									if (rangeEnd < chartDomainStart || rangeStart > chartDomainEnd) {
 										return null;
 									}
 
-									let clampedStart = chartFirst.date;
+									let clampedStart = chartFirst.xKey;
 									for (const point of chartData) {
 										const pointDate = dayjs(
 											(point as ChartDataRow & { rawDate?: string }).rawDate ||
 												point.date
 										).toDate();
-										if (pointDate >= annotationStart) {
-											clampedStart = point.date;
+										const pointCompare = isHourlyBucket
+											? pointDate
+											: dayjs(pointDate).startOf("day").toDate();
+										const startCompare = isHourlyBucket
+											? rangeStart
+											: dayjs(rangeStart).startOf("day").toDate();
+										if (pointCompare >= startCompare) {
+											clampedStart = point.xKey;
 											break;
 										}
 									}
 
-									let clampedEnd = chartLast.date;
+									let clampedEnd = chartLast.xKey;
 									for (let i = chartData.length - 1; i >= 0; i--) {
 										const point = chartData[i];
 										if (!point) {
@@ -536,8 +581,14 @@ export function MetricsChart({
 											(point as ChartDataRow & { rawDate?: string }).rawDate ||
 												point.date
 										).toDate();
-										if (pointDate <= annotationEnd) {
-											clampedEnd = point.date;
+										const pointCompare = isHourlyBucket
+											? pointDate
+											: dayjs(pointDate).startOf("day").toDate();
+										const endCompare = isHourlyBucket
+											? rangeEnd
+											: dayjs(rangeEnd).startOf("day").toDate();
+										if (pointCompare <= endCompare) {
+											clampedEnd = point.xKey;
 											break;
 										}
 									}

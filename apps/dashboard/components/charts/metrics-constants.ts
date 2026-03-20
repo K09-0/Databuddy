@@ -132,6 +132,8 @@ export const METRIC_COLORS = {
 
 export interface ChartDataRow {
 	date: string;
+	/** Stable category for Recharts X-axis; usually rawDate (YYYY-MM-DD or hourly key) */
+	xKey?: string;
 	pageviews?: number;
 	visitors?: number;
 	unique_visitors?: number;

@@ -1,86 +1,66 @@
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface SkeletonChartProps {
 	height?: number;
-	title?: string;
 	className?: string;
 }
 
 const SKELETON_BAR_HEIGHTS = [78, 95, 42, 110, 63, 87, 55];
 
-export function SkeletonChart({
-	height = 300,
-	title,
-	className,
-}: SkeletonChartProps) {
+export function SkeletonChart({ height = 550, className }: SkeletonChartProps) {
 	return (
-		<Card className={`border-0 bg-accent ${className}`}>
-			<CardHeader className="px-3 pt-3 pb-0.5">
-				{title ? (
-					<>
-						<CardTitle className="font-medium text-xs">{title}</CardTitle>
-						<CardDescription className="text-xs">
-							Loading data...
-						</CardDescription>
-					</>
-				) : (
-					<>
-						<Skeleton className="mb-1 h-3 w-32 rounded-md bg-foreground/10" />
-						<Skeleton className="h-2.5 w-40 rounded-md bg-foreground/10" />
-					</>
-				)}
-			</CardHeader>
-			<CardContent style={{ height: `${height}px` }}>
-				<div className="relative h-full w-full overflow-hidden">
-					<div className="absolute right-0 bottom-12 left-0 flex items-end justify-between px-4">
-						{SKELETON_BAR_HEIGHTS.map((barHeight, i) => (
-							<div
-								className="animate-pulse rounded-t-md bg-foreground/10"
-								key={`skeleton-${i + 1}`}
-								style={{
-									width: "12%",
-									height: `${barHeight}px`,
-									animationDelay: `${i * 100}ms`,
-									opacity: 0.8,
-								}}
-							/>
-						))}
-					</div>
+		<div
+			className={cn(
+				"w-full overflow-hidden rounded border bg-card",
+				className
+			)}
+		>
+			<div className="p-0">
+				<div
+					className="relative select-none"
+					style={{ width: "100%", height: height + 20 }}
+				>
+					<div className="absolute inset-0 overflow-hidden">
+						<div className="absolute right-0 bottom-12 left-0 flex items-end justify-between px-16 pl-20">
+							{SKELETON_BAR_HEIGHTS.map((barHeight, i) => (
+								<div
+									className="animate-pulse rounded-t bg-foreground/10"
+									key={`skeleton-${i + 1}`}
+									style={{
+										width: "12%",
+										height: `${barHeight}px`,
+										animationDelay: `${i * 100}ms`,
+										opacity: 0.8,
+									}}
+								/>
+							))}
+						</div>
 
-					{/* Bottom axis */}
-					<Skeleton className="absolute right-0 bottom-6 left-0 mx-4 h-0.5 rounded-full bg-foreground/10" />
+						<Skeleton className="absolute right-8 bottom-16 left-16 h-px bg-foreground/10" />
 
-					{/* X-axis labels */}
-					<div className="absolute right-0 bottom-0 left-0 flex justify-between px-4">
-						{Array.from({ length: 7 }).map((_, i) => (
-							<Skeleton
-								className="h-2 w-10 rounded-md bg-foreground/10"
-								key={`skeleton-x-${i + 1}`}
-							/>
-						))}
-					</div>
+						<div className="absolute right-8 bottom-10 left-16 flex justify-between">
+							{Array.from({ length: 7 }).map((_, i) => (
+								<Skeleton
+									className="h-2 w-10 rounded bg-foreground/10"
+									key={`skeleton-x-${i + 1}`}
+								/>
+							))}
+						</div>
 
-					{/* Y-axis */}
-					<Skeleton className="absolute top-4 bottom-6 left-4 w-0.5 rounded-full bg-foreground/10" />
+						<Skeleton className="absolute top-8 bottom-16 left-16 w-px bg-foreground/10" />
 
-					{/* Y-axis labels */}
-					<div className="absolute top-4 bottom-12 left-0 flex flex-col justify-between">
-						{Array.from({ length: 3 }).map((_, i) => (
-							<Skeleton
-								className="ml-1 h-2 w-6 rounded-md bg-foreground/10"
-								key={`skeleton-y-${i + 1}`}
-							/>
-						))}
+						<div className="absolute top-8 bottom-20 left-4 flex flex-col justify-between">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<Skeleton
+									className="h-2 w-8 rounded bg-foreground/10"
+									key={`skeleton-y-${i + 1}`}
+								/>
+							))}
+						</div>
 					</div>
 				</div>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

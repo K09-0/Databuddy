@@ -1,8 +1,8 @@
 "use client";
 
 import { EyeIcon, EyeSlashIcon, PlusIcon, XIcon } from "@phosphor-icons/react";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { SpinnerGapIcon } from "@phosphor-icons/react/dist/ssr/SpinnerGap";
+import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,52 +59,39 @@ interface CreateModeProps {
 
 type AnnotationModalProps = EditModeProps | CreateModeProps;
 
+function getInitialState(props: AnnotationModalProps) {
+	if (props.mode === "edit") {
+		return {
+			text: props.annotation.text,
+			tags: props.annotation.tags || [],
+			color: props.annotation.color,
+			isPublic: props.annotation.isPublic,
+		};
+	}
+	return {
+		text: "",
+		tags: [] as string[],
+		color: DEFAULT_ANNOTATION_VALUES.color,
+		isPublic: DEFAULT_ANNOTATION_VALUES.isPublic,
+	};
+}
+
 export function AnnotationModal(props: AnnotationModalProps) {
 	const { isOpen, mode, onClose, isSubmitting = false } = props;
 
-	const [text, setText] = useState("");
-	const [selectedTags, setSelectedTags] = useState<string[]>([]);
+	const initial = getInitialState(props);
+	const [text, setText] = useState(initial.text);
+	const [selectedTags, setSelectedTags] = useState<string[]>(initial.tags);
 	const [customTag, setCustomTag] = useState("");
-	const [selectedColor, setSelectedColor] = useState<string>(
-		DEFAULT_ANNOTATION_VALUES.color
-	);
-	const [isPublic, setIsPublic] = useState<boolean>(
-		DEFAULT_ANNOTATION_VALUES.isPublic
-	);
+	const [selectedColor, setSelectedColor] = useState(initial.color);
+	const [isPublic, setIsPublic] = useState(initial.isPublic);
 	const [submitting, setSubmitting] = useState(false);
 	const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-	useEffect(() => {
-		if (!isOpen) {
-			return;
-		}
-
-		if (mode === "edit") {
-			const { annotation } = props as EditModeProps;
-			setText(annotation.text);
-			setSelectedTags(annotation.tags || []);
-			setSelectedColor(annotation.color);
-			setIsPublic(annotation.isPublic);
-		} else {
-			setText("");
-			setSelectedTags([]);
-			setSelectedColor(DEFAULT_ANNOTATION_VALUES.color);
-			setIsPublic(DEFAULT_ANNOTATION_VALUES.isPublic);
-		}
-		setCustomTag("");
-		setValidationErrors([]);
-	}, [isOpen, mode]);
-
-	useHotkeys(
-		"escape",
-		() => {
-			if (isOpen) {
-				onClose();
-			}
-		},
-		{ enabled: isOpen },
-		[isOpen, onClose]
-	);
+	useHotkeys("escape", () => isOpen && onClose(), { enabled: isOpen }, [
+		isOpen,
+		onClose,
+	]);
 
 	const addTag = (tag: string) => {
 		if (tag && !selectedTags.includes(tag)) {
@@ -190,6 +177,9 @@ export function AnnotationModal(props: AnnotationModalProps) {
 
 	const isCreate = mode === "create";
 	const loading = submitting || isSubmitting;
+	const availableTags = COMMON_ANNOTATION_TAGS.filter(
+		(tag) => !selectedTags.includes(tag.value)
+	).slice(0, 5);
 
 	return (
 		<Dialog onOpenChange={(open) => !open && onClose()} open={isOpen}>
@@ -202,8 +192,7 @@ export function AnnotationModal(props: AnnotationModalProps) {
 				</DialogHeader>
 
 				<div className="space-y-4">
-					{/* Description */}
-					<div className="space-y-2">
+					<div className="space-y-1.5">
 						<Label
 							className="text-muted-foreground text-xs"
 							htmlFor="annotation-text"
@@ -227,15 +216,13 @@ export function AnnotationModal(props: AnnotationModalProps) {
 									{validationErrors[0]}
 								</span>
 							) : (
-								<span className="text-muted-foreground text-xs">
-									Keep it concise
-								</span>
+								<span />
 							)}
 							<span
 								className={cn(
 									"text-xs tabular-nums",
 									text.length > DEFAULT_ANNOTATION_VALUES.maxTextLength * 0.9
-										? "text-warning"
+										? "text-destructive"
 										: "text-muted-foreground"
 								)}
 							>
@@ -244,14 +231,13 @@ export function AnnotationModal(props: AnnotationModalProps) {
 						</div>
 					</div>
 
-					{/* Tags */}
-					<div className="space-y-2">
+					<div className="space-y-1.5">
 						<Label className="text-muted-foreground text-xs">Tags</Label>
 						{selectedTags.length > 0 && (
-							<div className="flex flex-wrap gap-1.5">
+							<div className="flex flex-wrap gap-1">
 								{selectedTags.map((tag) => (
 									<Badge
-										className="cursor-pointer gap-1 px-2 py-0.5 text-xs hover:bg-destructive hover:text-destructive-foreground"
+										className="cursor-pointer gap-1 px-1.5 py-0 text-xs hover:bg-destructive hover:text-destructive-foreground"
 										key={tag}
 										onClick={() => removeTag(tag)}
 										variant="secondary"
@@ -262,9 +248,9 @@ export function AnnotationModal(props: AnnotationModalProps) {
 								))}
 							</div>
 						)}
-						<div className="flex gap-2">
+						<div className="flex gap-1.5">
 							<Input
-								className="h-8 text-sm"
+								className="h-7 text-xs"
 								disabled={loading}
 								onChange={(e) => setCustomTag(e.target.value)}
 								onKeyDown={(e) => {
@@ -277,49 +263,46 @@ export function AnnotationModal(props: AnnotationModalProps) {
 								value={customTag}
 							/>
 							<Button
-								className="size-8 shrink-0"
+								className="size-7 shrink-0"
 								disabled={!customTag.trim() || loading}
 								onClick={handleCustomTagSubmit}
 								size="icon"
 								variant="outline"
 							>
-								<PlusIcon className="size-3.5" />
+								<PlusIcon className="size-3" />
 							</Button>
 						</div>
-						<div className="flex flex-wrap gap-1.5">
-							{COMMON_ANNOTATION_TAGS.filter(
-								(tag) => !selectedTags.includes(tag.value)
-							)
-								.slice(0, 5)
-								.map((tag) => (
+						{availableTags.length > 0 && (
+							<div className="flex flex-wrap gap-1">
+								{availableTags.map((tag) => (
 									<button
-										className="flex cursor-pointer items-center gap-1.5 rounded border bg-background px-2 py-1 text-muted-foreground text-xs transition-all hover:border-primary hover:bg-accent hover:text-foreground active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+										className="flex cursor-pointer items-center gap-1 rounded border bg-background px-1.5 py-0.5 text-muted-foreground text-[11px] transition-colors hover:border-primary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
 										disabled={loading}
 										key={tag.value}
 										onClick={() => addTag(tag.value)}
 										type="button"
 									>
 										<div
-											className="size-2 rounded-full"
+											className="size-1.5 rounded-full"
 											style={{ backgroundColor: tag.color }}
 										/>
 										{tag.label}
 									</button>
 								))}
-						</div>
+							</div>
+						)}
 					</div>
 
-					{/* Color */}
-					<div className="space-y-2">
+					<div className="space-y-1.5">
 						<Label className="text-muted-foreground text-xs">Color</Label>
-						<div className="flex gap-2">
+						<div className="flex gap-1.5">
 							{ANNOTATION_COLORS.map((color) => (
 								<button
 									className={cn(
-										"size-7 cursor-pointer rounded-full border-2 shadow-sm transition-all hover:scale-110 hover:shadow-md active:scale-100 disabled:cursor-not-allowed disabled:opacity-50",
+										"size-6 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50",
 										selectedColor === color.value
-											? "scale-110 border-foreground ring-2 ring-ring"
-											: "border-transparent hover:border-muted-foreground"
+											? "scale-110 border-foreground"
+											: "border-transparent"
 									)}
 									disabled={loading}
 									key={color.value}
@@ -332,25 +315,17 @@ export function AnnotationModal(props: AnnotationModalProps) {
 						</div>
 					</div>
 
-					{/* Visibility */}
-					<div className="flex items-center justify-between rounded border bg-accent px-3 py-2.5">
+					<div className="flex items-center justify-between rounded border px-3 py-2">
 						<div className="flex items-center gap-2">
 							{isPublic ? (
-								<EyeIcon className="size-4 text-primary" weight="duotone" />
+								<EyeIcon className="size-3.5 text-foreground" weight="duotone" />
 							) : (
 								<EyeSlashIcon
-									className="size-4 text-muted-foreground"
+									className="size-3.5 text-muted-foreground"
 									weight="duotone"
 								/>
 							)}
-							<div>
-								<span className="font-medium text-foreground text-sm">
-									Public
-								</span>
-								<span className="ml-1.5 text-muted-foreground text-xs">
-									Visible to everyone who can view this chart
-								</span>
-							</div>
+							<span className="text-foreground text-sm">Public</span>
 						</div>
 						<Switch
 							checked={isPublic}
@@ -374,8 +349,10 @@ export function AnnotationModal(props: AnnotationModalProps) {
 						disabled={!text.trim() || loading}
 						onClick={handleSubmit}
 					>
-						{loading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-						{isCreate ? "Create annotation" : "Save changes"}
+						{loading && (
+							<SpinnerGapIcon className="mr-1.5 size-3.5 animate-spin" />
+						)}
+						{isCreate ? "Create" : "Save"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

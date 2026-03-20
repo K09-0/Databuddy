@@ -108,15 +108,12 @@ export function MetricsChartWithAnnotations({
 			return [];
 		}
 
-		const { startDate, endDate, granularity } = dateRange;
+		const { startDate, endDate } = dateRange;
 
-		// When hourly granularity, endDate is midnight (start of day) but the chart
-		// renders data points throughout the day — extend to end-of-day so hourly
-		// annotations aren't silently filtered out
-		const effectiveEndDate =
-			granularity === "hourly"
-				? dayjs(endDate).endOf("day").toDate()
-				: endDate;
+		// URL endDate is the calendar end day but parses to midnight at the *start* of
+		// that day — extend to end-of-day so annotations on the last visible day
+		// (daily or hourly) aren't filtered out
+		const effectiveEndDate = dayjs(endDate).endOf("day").toDate();
 
 		return allAnnotations.filter((annotation) => {
 			const annotationStart = new Date(annotation.xValue);

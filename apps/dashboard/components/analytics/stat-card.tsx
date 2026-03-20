@@ -421,8 +421,8 @@ const MiniChart = memo(
 		};
 
 		return (
-			<ChartErrorBoundary fallbackClassName="h-[100px] w-full">
-				<ResponsiveContainer height={100} width="100%">
+			<ChartErrorBoundary fallbackClassName="h-[102px] w-full">
+				<ResponsiveContainer height={CHART_HEIGHT} width="100%">
 					{chartContent()}
 				</ResponsiveContainer>
 			</ChartErrorBoundary>
@@ -431,6 +431,8 @@ const MiniChart = memo(
 );
 
 MiniChart.displayName = "MiniChart";
+
+const CHART_HEIGHT = 102;
 
 const DURATION_REGEX = /\d+(\.\d+)?(s|ms)$/;
 
@@ -469,18 +471,32 @@ export function StatCard({
 				className={cn("gap-0 overflow-hidden border bg-card py-0", className)}
 				id={id}
 			>
-				{resolvedDisplayMode !== "compact" && (
-					<div className="dotted-bg bg-accent pt-0">
-						<Skeleton className="h-26 w-full" />
+				{resolvedDisplayMode === "text" && (
+					<div className="dotted-bg flex h-26 items-center justify-center bg-accent">
+						<Skeleton className="h-10 w-28 rounded" />
 					</div>
 				)}
-				<div className="flex items-center gap-2.5 border-t px-2.5 py-2.5">
-					{Icon && <Skeleton className="size-7 shrink-0 rounded" />}
-					<div className="min-w-0 flex-1 space-y-0.5">
-						<Skeleton className="h-5 w-14" />
-						<Skeleton className="h-3 w-12" />
+				{resolvedDisplayMode === "chart" && (
+					<div className="dotted-bg bg-accent pt-2">
+						<Skeleton className="h-[102px] w-full rounded" />
 					</div>
-					<Skeleton className="h-3.5 w-10 shrink-0" />
+				)}
+				<div className="flex items-center gap-2.5 px-2.5 py-2.5">
+					{Icon && (
+						<div className="flex size-7 shrink-0 items-center justify-center rounded bg-accent">
+							<Skeleton className="size-4 rounded" />
+						</div>
+					)}
+					<div className="min-w-0 flex-1">
+						<Skeleton className="h-5 w-28 rounded" />
+						<Skeleton className="h-4 w-24 rounded" />
+					</div>
+					{resolvedDisplayMode !== "text" && (
+						<div className="flex shrink-0 items-center gap-1">
+							<Skeleton className="size-4 rounded" />
+							<Skeleton className="h-3.5 w-9 rounded" />
+						</div>
+					)}
 				</div>
 			</Card>
 		);

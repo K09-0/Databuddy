@@ -16,7 +16,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { SkeletonChart } from "./skeleton-chart";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Simple color palette
 const COLORS = [
@@ -136,7 +136,22 @@ export function DistributionChart({
 	}, []);
 
 	if (isLoading) {
-		return <SkeletonChart height={height} title={title} />;
+		return (
+			<Card className="w-full">
+				<CardHeader className="px-4 py-3">
+					<Skeleton className="h-4 w-32 rounded" />
+					{description && <Skeleton className="mt-1 h-3 w-48 rounded" />}
+				</CardHeader>
+				<CardContent className="px-0 pt-0 pb-4">
+					<div
+						className="flex items-center justify-center"
+						style={{ height: height - 50 }}
+					>
+						<Skeleton className="size-[120px] rounded-full" />
+					</div>
+				</CardContent>
+			</Card>
+		);
 	}
 
 	if (!chartData.length) {

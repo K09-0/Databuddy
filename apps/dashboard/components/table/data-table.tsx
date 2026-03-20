@@ -51,34 +51,26 @@ interface DataTableProps<TData extends { name: string | number }, TValue> {
 	shareColumnTooltip?: string;
 }
 
-const EnhancedSkeleton = ({ minHeight }: { minHeight: string | number }) => (
-	<div className="animate-pulse space-y-3" style={{ minHeight }}>
-		<div className="flex items-center justify-between">
-			<Skeleton className="h-4 w-24 rounded" />
-			<Skeleton className="h-8 w-32 rounded" />
+const SKELETON_ROW_WIDTHS = ["60%", "45%", "55%", "35%", "50%"] as const;
+
+const TableSkeleton = ({ minHeight }: { minHeight: string | number }) => (
+	<div className="bg-accent" style={{ height: minHeight }}>
+		<div className="sticky top-0 z-10 flex h-10 items-center gap-2 border-b bg-card px-2">
+			<Skeleton className="h-3 w-20 rounded" />
+			<div className="flex-1" />
+			<Skeleton className="h-3 w-14 rounded" />
+			<Skeleton className="h-3 w-10 rounded" />
 		</div>
-		<div className="space-y-2">
-			{Array.from({ length: 5 }, (_, index) => index).map((itemIndex) => (
-				<div
-					className="flex animate-pulse items-center space-x-4 rounded bg-sidebar-accent/20 p-3"
-					key={`skeleton-${itemIndex}`}
-				>
-					<Skeleton className="size-6 shrink-0 rounded-full" />
-					<div className="flex-1 space-y-2">
-						<Skeleton className="h-4 w-full rounded" />
-						<div className="flex items-center space-x-2">
-							<Skeleton className="h-3 w-16 rounded" />
-							<Skeleton className="h-3 w-12 rounded" />
-							<Skeleton className="h-3 w-8 rounded" />
-						</div>
-					</div>
-					<div className="space-y-1 text-right">
-						<Skeleton className="h-4 w-12 rounded" />
-						<Skeleton className="h-3 w-8 rounded" />
-					</div>
-				</div>
-			))}
-		</div>
+		{SKELETON_ROW_WIDTHS.map((width, i) => (
+			<div
+				className="flex h-11 items-center gap-3 border-b px-2"
+				key={`skeleton-row-${i}`}
+			>
+				<Skeleton className="h-3.5 rounded" style={{ width }} />
+				<div className="flex-1" />
+				<Skeleton className="h-3.5 w-10 rounded" />
+			</div>
+		))}
 	</div>
 );
 
@@ -126,30 +118,30 @@ export function DataTable<TData extends { name: string | number }, TValue>({
 		return (
 			<div
 				className={cn(
-					"w-full overflow-hidden rounded border bg-accent/50 backdrop-blur-sm",
+					"w-full overflow-hidden rounded border bg-card backdrop-blur-sm",
 					className
 				)}
 			>
-				<div className="p-4 px-2 pb-2 sm:px-3">
-					<div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
-						<div className="min-w-0 flex-1">
-							<Skeleton className="h-5 w-32 rounded" />
-							{description && <Skeleton className="mt-0.5 h-3 w-48 rounded" />}
+				<TableToolbar
+					borderBottom={!tabs}
+					description={description}
+					showFullScreen={false}
+					title={title}
+				/>
+				{tabs && tabs.length > 1 && (
+					<div className="mt-3">
+						<div className="flex gap-1 border-b">
+							{tabs.map((tab) => (
+								<Skeleton
+									className="h-9 w-20 rounded-none border-b-2 border-transparent"
+									key={tab.id}
+								/>
+							))}
 						</div>
 					</div>
-
-					{tabs && tabs.length > 1 && (
-						<div className="mt-3">
-							<div className="flex gap-1 border-b">
-								{tabs.map((tab) => (
-									<Skeleton className="h-8 w-20 rounded" key={tab.id} />
-								))}
-							</div>
-						</div>
-					)}
-				</div>
-				<div className="px-2 pb-2 sm:px-3">
-					<EnhancedSkeleton minHeight={minHeight} />
+				)}
+				<div className="overflow-hidden">
+					<TableSkeleton minHeight={minHeight} />
 				</div>
 			</div>
 		);

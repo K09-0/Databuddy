@@ -245,11 +245,13 @@ function TableContentInner<TData extends { name: string | number }>({
 
 	if (!displayData.length) {
 		return (
-			<TableEmptyState
-				description="Data will appear here when available and ready to display."
-				icon={<DatabaseIcon className="size-6 text-accent" />}
-				title={emptyMessage}
-			/>
+			<div style={{ height: minHeight }}>
+				<TableEmptyState
+					description="Data will appear here when available and ready to display."
+					icon={<DatabaseIcon className="size-6 text-accent" />}
+					title={emptyMessage}
+				/>
+			</div>
 		);
 	}
 
