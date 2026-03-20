@@ -9,6 +9,7 @@ interface PageHeaderProps {
 	title: string;
 	description: string;
 	icon: React.ReactElement<IconProps>;
+	className?: string;
 	badgeContent?: string;
 	badgeVariant?:
 		| "default"
@@ -29,13 +30,19 @@ export const PageHeader = memo(
 		title,
 		description,
 		icon,
+		className,
 		badgeContent,
 		badgeVariant = "secondary",
 		badgeClassName,
 		right,
 		count,
 	}: PageHeaderProps) => (
-		<div className="relative flex shrink-0 items-center justify-between gap-2 border-b p-3 sm:p-4">
+		<div
+			className={cn(
+				"relative flex shrink-0 items-center justify-between gap-2 border-b p-3 sm:p-4",
+				className
+			)}
+		>
 			<div className="flex min-w-0 flex-1 items-center gap-3">
 				<div className="shrink-0 rounded-lg border bg-secondary p-2.5">
 					{cloneElement(icon, {

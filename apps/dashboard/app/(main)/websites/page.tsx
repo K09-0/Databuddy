@@ -65,6 +65,7 @@ export default function WebsitesPage() {
 		<div className="flex h-full flex-col">
 			{/* Enhanced header */}
 			<PageHeader
+				className="h-[88px]"
 				description="Track analytics for all your websites"
 				icon={<TrendUpIcon />}
 				right={

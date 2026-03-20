@@ -8,7 +8,14 @@ import {
 } from "@phosphor-icons/react";
 import { Command as CommandPrimitive } from "cmdk";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useMemo,
+	useState,
+	type ReactNode,
+} from "react";
 import { useDebouncedCallback } from "@tanstack/react-pacer";
 import { useHotkeys } from "react-hotkeys-hook";
 import {
@@ -116,7 +123,23 @@ function mergeGroups(groups: SearchGroup[]): SearchGroup[] {
 	return [...merged.entries()].map(([category, items]) => ({ category, items }));
 }
 
-export function CommandSearch() {
+type CommandSearchContextValue = {
+	openCommandSearchAction: () => void;
+};
+
+const CommandSearchContext = createContext<CommandSearchContextValue | null>(
+	null
+);
+
+export function useCommandSearchOpenAction(): () => void {
+	const ctx = useContext(CommandSearchContext);
+	if (!ctx) {
+		return () => {};
+	}
+	return ctx.openCommandSearchAction;
+}
+
+export function CommandSearchProvider({ children }: { children: ReactNode }) {
 	const [open, setOpen] = useState(false);
 	const [search, setSearch] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -212,8 +235,21 @@ export function CommandSearch() {
 		[]
 	);
 
+	const openCommandSearchAction = useCallback(() => {
+		setOpen(true);
+	}, []);
+
+	const contextValue = useMemo(
+		(): CommandSearchContextValue => ({
+			openCommandSearchAction,
+		}),
+		[openCommandSearchAction]
+	);
+
 	return (
-		<Dialog onOpenChange={handleOpenChange} open={open}>
+		<CommandSearchContext.Provider value={contextValue}>
+			{children}
+			<Dialog onOpenChange={handleOpenChange} open={open}>
 			<DialogHeader className="sr-only">
 				<DialogTitle>Command Search</DialogTitle>
 				<DialogDescription>Search for pages, settings, and websites</DialogDescription>
@@ -306,6 +342,7 @@ export function CommandSearch() {
 				</CommandPrimitive>
 			</DialogContent>
 		</Dialog>
+		</CommandSearchContext.Provider>
 	);
 }
 
