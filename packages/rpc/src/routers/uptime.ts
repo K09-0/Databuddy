@@ -6,7 +6,7 @@ import { z } from "zod";
 import { rpcError } from "../errors";
 import { protectedProcedure } from "../orpc";
 import { withWorkspace } from "../procedures/with-workspace";
-import { sendNotification } from "./notifications"; 
+import { sendNotification } from "../../../db/src/drizzle/notifications";
 
 const client = new Client({ token: process.env.UPSTASH_QSTASH_TOKEN });
 
