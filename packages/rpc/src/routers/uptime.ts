@@ -6,6 +6,7 @@ import { z } from "zod";
 import { rpcError } from "../errors";
 import { protectedProcedure } from "../orpc";
 import { withWorkspace } from "../procedures/with-workspace";
+import { sendNotification } from "./notifications"; 
 
 const client = new Client({ token: process.env.UPSTASH_QSTASH_TOKEN });
 
@@ -406,6 +407,10 @@ export const uptimeRouter = {
 						.set({ isPaused: input.pause, updatedAt: new Date() })
 						.where(eq(uptimeSchedules.id, input.scheduleId)),
 				]);
+
+                // ВЫЗОВ УВЕДОМЛЕНИЯ ПРИ СМЕНЕ СТАТУСА (ПАУЗА/РЕЗЮМЕ)
+                await sendNotification(db, schedule.websiteId ?? "", input.pause ? "paused" : "active");
+
 			} catch (error) {
 				logger.error(
 					{ scheduleId: input.scheduleId, error },
@@ -447,6 +452,9 @@ export const uptimeRouter = {
 						.set({ isPaused: true, updatedAt: new Date() })
 						.where(eq(uptimeSchedules.id, input.scheduleId)),
 				]);
+                
+                await sendNotification(db, schedule.websiteId ?? "", "paused");
+
 			} catch (error) {
 				logger.error(
 					{ scheduleId: input.scheduleId, error },
@@ -484,6 +492,9 @@ export const uptimeRouter = {
 						.set({ isPaused: false, updatedAt: new Date() })
 						.where(eq(uptimeSchedules.id, input.scheduleId)),
 				]);
+
+                await sendNotification(db, schedule.websiteId ?? "", "active");
+
 			} catch (error) {
 				logger.error(
 					{ scheduleId: input.scheduleId, error },
