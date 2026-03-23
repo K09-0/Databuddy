@@ -1116,3 +1116,12 @@ export type Feedback = typeof feedback.$inferSelect;
 export type FeedbackInsert = typeof feedback.$inferInsert;
 export type FeedbackRedemption = typeof feedbackRedemptions.$inferSelect;
 export type FeedbackRedemptionInsert = typeof feedbackRedemptions.$inferInsert;
+// --- ALARMS SYSTEM ---
+export const alarms = pgTable("alarms", {
+  id: text("id").primaryKey(), // ID аларма (обычно генерируется через createId)
+  websiteId: text("website_id").notNullable(), // Привязка к сайту
+  channels: jsonb("channels").$type<string[]>().notNullable().default([]), // ['slack', 'discord', 'email']
+  triggerConditions: jsonb("trigger_conditions").notNullable(), // Условия срабатывания
+  createdAt: timestamp("created_at").defaultNow().notNullable(),
+  updatedAt: timestamp("updated_at").defaultNow().notNullable(),
+});
